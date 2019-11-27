@@ -13,7 +13,4 @@ pub enum Mode {
 
     /// A format used to represent drawings
     Geometric,
-
-    /// A format based on the markdown language
-    Markdown,
 }
