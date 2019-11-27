@@ -12,6 +12,13 @@ pub struct Shape {
 
 impl Shape {
     /// Initializes and returns a new empty shape.
+    ///
+    /// # Examples
+    /// ```
+    /// use server::modes::geometric::Shape;
+    ///
+    /// let s = Shape::new(); // Make a new shape
+    /// ```
     pub fn new() -> Shape {
         Shape {
             points: Vec::new(),
@@ -25,6 +32,13 @@ pub struct Point(pub i64, pub i64);
 
 impl Point {
     /// Returns a new point with the given coordinates.
+    ///
+    /// # Examples
+    /// ```
+    /// use server::modes::geometric::Point;
+    ///
+    /// let p = Point::new(0, 0); // Make a new point at the origin
+    /// ```
     pub fn new(x: i64, y: i64) -> Self {
         Self(x, y) // Return the point
     }
@@ -32,6 +46,15 @@ impl Point {
 
 impl Display for Point {
     /// Converts the given point to a coordinate forammted as such: (x, y).
+    ///
+    /// # Examples
+    /// ```
+    /// use server::modes::geometric::Point;
+    /// use std::fmt::Display;
+    ///
+    /// let s = Point::new(0, 0); // Make a shape at the origin
+    /// println!("{}", s); // (0, 0)
+    /// ```
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({}, {})", self.0, self.1) // Return the coordinate as a string
     }
