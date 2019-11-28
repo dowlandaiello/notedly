@@ -25,7 +25,7 @@ impl Expression {
     /// # Example
     ///
     /// ```
-    /// use server::{note::Expression, modes::Algebraic};
+    /// use server::{note::Expression, modes::Mode::Algebraic};
     ///
     /// // Make a new algebraic expression
     /// let e = Expression::new(Algebraic);
@@ -67,7 +67,7 @@ impl Note {
     /// ```
     /// use server::note::Note;
     ///
-    /// let n = Note::new("dowlandaiello@gmail.com"); // Make a new note
+    /// let n = Note::new("dowlandaiello@gmail.com".to_owned()); // Make a new note
     /// ```
     pub fn new(author: String) -> Note {
         Note {

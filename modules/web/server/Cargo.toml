@@ -5,5 +5,7 @@ authors = ["Dowland Aiello <dowlandaiello@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+tokio = "0.2.0-alpha.6"
 reqwest = {version = "0.10.0-alpha.2", features = ["json"]}
-
+snafu = "0.6.0"
+sha3 = "0.8.2"
