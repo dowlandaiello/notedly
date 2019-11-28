@@ -13,7 +13,8 @@ pub struct Shape {
 impl Shape {
     /// Initializes and returns a new empty shape.
     ///
-    /// # Examples
+    /// # Example
+    ///
     /// ```
     /// use server::modes::geometric::Shape;
     ///
@@ -33,7 +34,8 @@ pub struct Point(pub i64, pub i64);
 impl Point {
     /// Returns a new point with the given coordinates.
     ///
-    /// # Examples
+    /// # Example
+    ///
     /// ```
     /// use server::modes::geometric::Point;
     ///
@@ -47,7 +49,8 @@ impl Point {
 impl Display for Point {
     /// Converts the given point to a coordinate forammted as such: (x, y).
     ///
-    /// # Examples
+    /// # Example
+    ///
     /// ```
     /// use server::modes::geometric::Point;
     /// use std::fmt::Display;

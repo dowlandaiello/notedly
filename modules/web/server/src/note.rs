@@ -17,9 +17,22 @@ pub struct Expression {
 
 impl Expression {
     /// Initializes and returns a new expression with the given mode.
+    ///
+    /// # Arguments
+    ///
+    /// * `mode` - The format that the expression should be formatted in
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use server::{note::Expression, modes::Algebraic};
+    ///
+    /// // Make a new algebraic expression
+    /// let e = Expression::new(Algebraic);
+    /// ```
     pub fn new(mode: Mode) -> Expression {
-        Expression{
-            sub_expression: None,
+        Expression {
+            sub_expressions: None,
             value: None,
             shape: None,
             mode: mode,
@@ -44,6 +57,18 @@ pub struct Note {
 
 impl Note {
     /// Initializes and returns a new note with the given author.
+    ///
+    /// # Arguments
+    ///
+    /// * `author` - The username of the author of the note
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use server::note::Note;
+    ///
+    /// let n = Note::new("dowlandaiello@gmail.com"); // Make a new note
+    /// ```
     pub fn new(author: String) -> Note {
         Note {
             author: author,
