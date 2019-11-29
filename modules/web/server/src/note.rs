@@ -1,6 +1,8 @@
 use super::modes::{geometric::Shape, Mode};
+use serde::{Serialize, Deserialize};
 
 /// A character or sequence of characters.
+#[derive(Serialize, Deserialize)]
 pub struct Expression {
     /// The expressions contained in the expression
     pub sub_expressions: Option<Vec<Expression>>,
@@ -41,6 +43,7 @@ impl Expression {
 }
 
 /// A note on a given board, authored by a particular user.
+#[derive(Serialize, Deserialize)]
 pub struct Note {
     /// The author of the note
     pub author: String,

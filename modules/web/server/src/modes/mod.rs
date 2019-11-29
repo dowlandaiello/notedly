@@ -1,6 +1,9 @@
 pub mod geometric; // Export the geometric mode
 
+use serde::{Serialize, Deserialize};
+
 /// Any particular mode of textual content representation.
+#[derive(Serialize, Deserialize)]
 pub enum Mode {
     /// The default format used to represent English writing
     Anglicized,

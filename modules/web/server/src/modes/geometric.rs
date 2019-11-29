@@ -1,7 +1,9 @@
 use std::fmt::{Display, Formatter, Result};
+use serde::{Serialize, Deserialize};
 
 /// A vector body constructed of a sequences of points and their associated
 /// links.
+#[derive(Serialize, Deserialize)]
 pub struct Shape {
     /// The points in the shape
     pub points: Vec<Point>,
@@ -29,6 +31,7 @@ impl Shape {
 }
 
 /// A point on a euclidean plane represented by a tuple of pixels.
+#[derive(Serialize, Deserialize)]
 pub struct Point(pub i64, pub i64);
 
 impl Point {

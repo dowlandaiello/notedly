@@ -1,3 +1,5 @@
+use couchbase::Cluster;
+
 fn main() {
-    println!("Hello, world!");
+
 }
