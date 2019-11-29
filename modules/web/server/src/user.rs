@@ -1,5 +1,6 @@
 use sha3::{Digest, Sha3_256};
 use snafu::Snafu;
+use serde::{Serialize, Deserialize};
 use std::{
     collections::HashMap,
     convert::{From, TryInto},
@@ -28,6 +29,7 @@ impl From<reqwest::Error> for Error {
 }
 
 /// A provider of some user credentials or information.
+#[derive(Serialize, Deserialize)]
 pub enum AccessProvider {
     GitHub,
     Google,
