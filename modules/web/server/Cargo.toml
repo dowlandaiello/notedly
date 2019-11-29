@@ -11,3 +11,4 @@ snafu = "0.6.0"
 sha3 = "0.8.2"
 couchbase = "1.0.0-alpha.2"
 serde = {version = "1.0.103", features = ["derive"]}
+clap = "2.33.0"
