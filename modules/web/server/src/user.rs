@@ -54,6 +54,7 @@ impl AccessProvider {
 }
 
 /// Any user of the notedly app.
+#[derive(Serialize, Deserialize)]
 pub struct User {
     /// The user's GitHub/Google access token
     pub access_token: String,
