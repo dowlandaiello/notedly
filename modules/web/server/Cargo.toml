@@ -9,7 +9,5 @@ tokio = "0.2.0-alpha.6"
 reqwest = {version = "0.10.0-alpha.2", features = ["json"]}
 snafu = "0.6.0"
 sha3 = "0.8.2"
-couchbase = "1.0.0-alpha.2"
 serde = {version = "1.0.103", features = ["derive"]}
 clap = { git = "https://github.com/clap-rs/clap" } 
-

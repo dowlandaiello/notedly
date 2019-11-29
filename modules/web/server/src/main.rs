@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate clap;
 
-use couchbase::Cluster;
 use std::env;
 use tokio::runtime::current_thread;
 
