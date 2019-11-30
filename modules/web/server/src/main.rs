@@ -6,7 +6,7 @@ use tokio::runtime::current_thread;
 
 /// The notedly command-line interface.
 #[derive(Clap)]
-#[clap(version = crate_version!(), author = "Dowland A.")]
+#[clap(version = "1.0", author = "Dowland A.")]
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
@@ -23,7 +23,7 @@ enum SubCommand {
 /// have been set, and can be found in your OS env: GITHUB_OAUTH_CLIENT_ID,
 /// GITHUB_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET.
 #[derive(Clap)]
-#[clap(name = "serve", version = crate_version!(), author = "Dowland A.")]
+#[clap(name = "serve", version = "1.0", author = "Dowland A.")]
 struct Serve {
     /// Print debug info
     #[clap(short = "d")]
@@ -57,7 +57,7 @@ fn serve(serve: Serve) {
         "GOOGLE_OAUTH_CLIENT_ID",
         "GOOGLE_OAUTH_CLIENT_SECRET",
     ];
-    let mut var_values: Vec<String>;
+    let mut var_values: Vec<String> = Vec::new();
 
     // Iterate through each of the desired ENV variables
     for required_var in required_vars.iter() {
@@ -66,7 +66,7 @@ fn serve(serve: Serve) {
             Ok(var) => var_values.push(var),
             // If the var doesn't exist, panic! We need each of the vars to be set in order to
             // work.
-            Err(e) => panic!("Expected env var {} to be set.", required_var),
+            Err(_) => panic!("Expected env var {} to be set.", required_var),
         }
     }
 }
