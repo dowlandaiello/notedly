@@ -36,15 +36,7 @@ impl Iterator for Body {
             // Read into the buffer
             match file_reader.take(8).read_to_end(&mut buffer) {
                 // If we could read anything from the buffer, return it
-                Ok(_) => {
-                    let mut final_buffer: [char; 8] = [' '; 8]; // The read bytes, as an array of chars
-                    let mut i = 0; // The index of the char
-
-                    // Convert the array of bytes to an array of chars
-                    Some(buffer.into_iter().map(|byte| {
-                        byte as char
-                    }).collect())
-                }
+                Ok(_) => Some(buffer.into_iter().map(|byte| byte as char).collect()),
 
                 // Otherwise, don't return aything
                 Err(_) => None,
