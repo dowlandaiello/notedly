@@ -26,17 +26,17 @@ pub struct Body {
 
 impl Iterator for Body {
     // 8 chars should be stored in each segment
-    type Item = Vec<char>;
+    type Item = String;
 
     /// Gets the next sequence of character's in the notes body.
     fn next(&mut self) -> Option<Self::Item> {
-        let mut buffer: Vec<u8> = Vec::new(); // Get a buffer to read into
+        let mut buffer: String = String::new(); // Get a buffer to read into
 
         if let Some(file_reader) = self.file_reader.take() {
             // Read into the buffer
-            match file_reader.take(8).read_to_end(&mut buffer) {
+            match file_reader.take(8).read_to_string(&mut buffer) {
                 // If we could read anything from the buffer, return it
-                Ok(_) => Some(buffer.into_iter().map(|byte| byte as char).collect()),
+                Ok(_) => Some(buffer),
 
                 // Otherwise, don't return aything
                 Err(_) => None,
