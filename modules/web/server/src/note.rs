@@ -4,9 +4,8 @@ use snafu::Snafu;
 use std::{
     array::TryFromSliceError,
     convert::TryInto,
-    fs::File,
-    io::{BufReader, Error as IoError, Read},
-    iter::Iterator,
+    fs::{File, OpenOptions},
+    io::{BufReader, Error as IoError, Write},
 };
 
 /// An error encountered while dealing with a note.
@@ -14,48 +13,97 @@ use std::{
 pub enum Error {
     #[snafu(display("Could not open note titled {}: {}", filename, source))]
     OpenNote { filename: String, source: IoError },
+
     #[snafu(display("Could not find appropriate metadata for the note"))]
     NoMetadata,
+
+    #[snafu(display("Could not write to the note titled {}: {}", filename, source))]
+    WriteNote { filename: String, source: IoError },
 }
 
 /// The contents of a note.
+#[derive(Serialize, Deserialize)]
 pub struct Body {
     /// The file storing the contents of the note
-    file_reader: Option<BufReader<File>>,
+    #[serde(skip)]
+    file: Option<File>,
+
+    /// The number of 8-character strings contained in the body of the note
+    pub num_segments: i64,
 }
 
-// TODO: Implement write trait for note.
-impl Iterator for Body {
-    /// 8 chars should be stored in each segment
-    type Item = String;
-
-    /// Gets the next sequence of character's in the notes body.
+impl Body {
+    /// Writes the string to the body of a note, and returns the number of segments written to the
+    /// note.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - The string to write to the note
     ///
     /// # Example
     ///
     /// ```
-    /// use server::note::Note;
-    /// use std::iter::Iterator; 
+    /// use server::note::{Note, Body};
     ///
-    /// // Make a new note
-    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned());
-    ///
-    /// println!("{:?}", n.contents().unwrap().next()); // => None
+    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
+    /// let mut b = n.body().unwrap(); // Get a read/writer for the body of the note
+    /// b.write("Hello, world!".to_string()); // Write a few characters to the note
     /// ```
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut buffer: String = String::new(); // Get a buffer to read into
+    pub fn write(&mut self, s: String) -> Result<usize, Error> {
+        if let Some(mut file) = self.file.take() {
+            // Each of the segments that will be written to the note
+            let mut segments: Vec<String> = vec![s];
 
-        if let Some(file_reader) = self.file_reader.take() {
-            // Read into the buffer
-            match file_reader.take(8).read_to_string(&mut buffer) {
-                // If we could read anything from the buffer, return it
-                Ok(_) => Some(buffer),
+            // The number of segments successfully written to the file
+            let mut num_written: usize = 0;
 
-                // Otherwise, don't return aything
-                Err(_) => None,
+            let mut i = 0; // An iterator
+
+            // Keep adding 8-char segments of the inputted string to the note
+            loop {
+                // The original segment, before slicing--if necessary
+                let mut segment = segments[i].clone();
+
+                // If the segment is too big, slice it up
+                if segment.len() > 8 {
+                    segments.push(segment[8..].to_owned()); // Put the rest on the end of the segments vec
+                    segment = segment[..8].to_owned(); // Slice it up
+                }
+
+                // Write the segment to the file
+                match file.write(segment.as_bytes()) {
+                    Ok(_) => {
+                        num_written += 1;
+                    }
+                    Err(_) => (),
+                };
+
+                // Check if the loop should be done
+                if segment.len() < 8 {
+                    break; // Break
+                }
+
+                i += 1; // Increment the iterator
             }
+
+            // Recalculate the number of segments in the body of the note
+            self.num_segments += num_written as i64;
+
+            // Move the opened file back into the Body struct
+            self.file.replace(file);
+
+            Ok(num_written) // Return the number of segments successfully written to the file
         } else {
-            None // We don't have anything to read from, so we're done here!
+            Ok(0) // The file isn't open, so we can't write anything to it
+        }
+    }
+
+    /// Gets a reader for the note. If the file isn't already open, None is returned.
+    pub fn reader(self) -> Option<BufReader<File>> {
+        if let Some(file) = self.file {
+            Some(BufReader::new(file)) // Return a buff reader for the file
+        } else {
+            None // Return nothing
         }
     }
 }
@@ -63,14 +111,14 @@ impl Iterator for Body {
 /// A note on a given board, authored by a particular user.
 #[derive(Serialize, Deserialize)]
 pub struct Note {
-    /// The number of 8-letter segments contained in the note
-    pub num_segments: i64,
-
     /// The title of the note
     pub title: String,
 
     /// The author of the note
     pub author: String,
+
+    /// The body of the note
+    body: Body,
 }
 
 impl Note {
@@ -85,13 +133,16 @@ impl Note {
     /// ```
     pub fn new(author: String, title: String) -> Note {
         Note {
-            num_segments: 0,
             title: author,
             author: title,
+            body: Body {
+                file: None,
+                num_segments: 0,
+            },
         } // Return the new note
     }
 
-    /// Gets an iterator over the contents of the note.
+    /// Gets an read/writer for the body of the note.
     ///
     /// # Example
     ///
@@ -99,15 +150,9 @@ impl Note {
     /// use server::note::Note;
     ///
     /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
-    ///
-    /// // Iterate through each of the 8-char segments in the note.
-    /// // Note: The below print statement will never run, as nothing has been
-    /// // to the note.
-    /// for segment in n.contents().unwrap() {
-    ///     println!("{}", segment); // Print the segment
-    /// }
+    /// let b = n.body().unwrap(); // Get a read-writer for the body of the note
     /// ```
-    pub fn contents(&self) -> Result<Body, Error> {
+    pub fn body(&self) -> Result<Body, Error> {
         let mut hasher = Sha3_256::new(); // Make a new hasher
 
         // We'll want to generate a hash comprising of the note's author_title.
@@ -123,9 +168,15 @@ impl Note {
                 let f_name: String = format!("{}.note", hex::encode(h));
 
                 // Try opening the file
-                match File::open(&f_name) {
+                match OpenOptions::new()
+                    .read(true)
+                    .append(true)
+                    .create(true)
+                    .open(&f_name)
+                {
                     Ok(file) => Ok(Body {
-                        file_reader: Some(BufReader::new(file)),
+                        file: Some(file),
+                        num_segments: self.body.num_segments,
                     }),
                     Err(e) => Err(Error::OpenNote {
                         filename: f_name,
