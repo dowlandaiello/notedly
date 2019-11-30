@@ -24,11 +24,24 @@ pub struct Body {
     file_reader: Option<BufReader<File>>,
 }
 
+// TODO: Implement write trait for note.
 impl Iterator for Body {
-    // 8 chars should be stored in each segment
+    /// 8 chars should be stored in each segment
     type Item = String;
 
     /// Gets the next sequence of character's in the notes body.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use server::note::Note;
+    /// use std::iter::Iterator; 
+    ///
+    /// // Make a new note
+    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned());
+    ///
+    /// println!("{:?}", n.contents().unwrap().next()); // => None
+    /// ```
     fn next(&mut self) -> Option<Self::Item> {
         let mut buffer: String = String::new(); // Get a buffer to read into
 
@@ -68,7 +81,7 @@ impl Note {
     /// ```
     /// use server::note::Note;
     ///
-    /// let n = Note::new("dowlandaiello@gmail.com", "Untitled"); // Make a new note
+    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
     /// ```
     pub fn new(author: String, title: String) -> Note {
         Note {
@@ -85,7 +98,7 @@ impl Note {
     /// ```
     /// use server::note::Note;
     ///
-    /// let n = Note::new("dowlandaiello@gmail.com", "Untitled"); // Make a new note
+    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
     ///
     /// // Iterate through each of the 8-char segments in the note.
     /// // Note: The below print statement will never run, as nothing has been
