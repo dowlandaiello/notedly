@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 use snafu::Snafu;
-use serde::{Serialize, Deserialize};
 use std::{
     collections::HashMap,
     convert::{From, TryInto},

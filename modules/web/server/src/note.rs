@@ -1,7 +1,13 @@
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 use snafu::Snafu;
-use std::{fs::File, io::Error as IoError, iter::Iterator, convert::TryInto, array::TryFromSliceError};
+use std::{
+    array::TryFromSliceError,
+    convert::TryInto,
+    fs::File,
+    io::{BufReader, Error as IoError, Read},
+    iter::Iterator,
+};
 
 /// An error encountered while dealing with a note.
 #[derive(Debug, Snafu)]
@@ -15,19 +21,37 @@ pub enum Error {
 /// The contents of a note.
 pub struct Body {
     /// The file storing the contents of the note
-    file: File,
+    file_reader: Option<BufReader<File>>,
 }
 
 impl Iterator for Body {
     // 8 chars should be stored in each segment
-    type Item = [char; 8];
+    type Item = Vec<char>;
 
     /// Gets the next sequence of character's in the notes body.
     fn next(&mut self) -> Option<Self::Item> {
-        let mut buffer: [char; 8] = [0; 8]; // Get a buffer to read into
+        let mut buffer: Vec<u8> = Vec::new(); // Get a buffer to read into
 
-        // Read into the buffer
-        self.file.read(&mut buffer);
+        if let Some(file_reader) = self.file_reader.take() {
+            // Read into the buffer
+            match file_reader.take(8).read_to_end(&mut buffer) {
+                // If we could read anything from the buffer, return it
+                Ok(_) => {
+                    let mut final_buffer: [char; 8] = [' '; 8]; // The read bytes, as an array of chars
+                    let mut i = 0; // The index of the char
+
+                    // Convert the array of bytes to an array of chars
+                    Some(buffer.into_iter().map(|byte| {
+                        byte as char
+                    }).collect())
+                }
+
+                // Otherwise, don't return aything
+                Err(_) => None,
+            }
+        } else {
+            None // We don't have anything to read from, so we're done here!
+        }
     }
 }
 
@@ -94,15 +118,19 @@ impl Note {
                 let f_name: String = format!("{}.note", hex::encode(h));
 
                 // Try opening the file
-                match File::open(f_name) {
-                    Ok(file) => Ok(Body { file: file }),
+                match File::open(&f_name) {
+                    Ok(file) => Ok(Body {
+                        file_reader: Some(BufReader::new(file)),
+                    }),
                     Err(e) => Err(Error::OpenNote {
                         filename: f_name,
                         source: e,
                     }),
                 }
-            },
-            Err(e) => Err(Error::NoMetadata),
+            }
+
+            // Otherwise, don't return anything
+            Err(_) => Err(Error::NoMetadata),
         }
     }
 }

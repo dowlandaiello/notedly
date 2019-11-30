@@ -1,6 +1,6 @@
 pub mod geometric; // Export the geometric mode
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Any particular mode of textual content representation.
 #[derive(Serialize, Deserialize)]

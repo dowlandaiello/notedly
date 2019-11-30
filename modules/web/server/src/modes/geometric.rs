@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter, Result};
-use serde::{Serialize, Deserialize};
 
 /// A vector body constructed of a sequences of points and their associated
 /// links.
