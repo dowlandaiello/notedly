@@ -42,6 +42,15 @@ struct Serve {
     /// The port the API will be served on
     #[clap(short = "p", default_value = "8080")]
     port: u16,
+
+    /// The remote couchbase db cluster connection endpoint
+    #[clap(short = "c", default_value = "couchbase://0.0.0.0")]
+    couchbase_endpoint: String,
+
+    /// The username of the administrator couchbase cluster account that will be used for user data
+    /// storage and retrieval
+    #[clap(short = "u", default_value = "Administrator")]
+    couchbase_administrator_username: String,
 }
 
 /// The entry point for the notedly CLI.
@@ -70,12 +79,14 @@ fn main() {
 ///
 /// * `serve` - A config for the serve command
 fn serve(serve: Serve) {
-    // The names of the environment variables where we expect that the oauth config has been stored
+    // The names of the environment variables where we expect that the oauth config & couchbase
+    // credentials have been stored
     let required_vars = [
         "GITHUB_OAUTH_CLIENT_ID",
         "GITHUB_OAUTH_CLIENT_SECRET",
         "GOOGLE_OAUTH_CLIENT_ID",
         "GOOGLE_OAUTH_CLIENT_SECRET",
+        "COUCHBASE_CLUSTER_ADMIN_PASSWORD",
     ];
     let mut var_values: Vec<String> = Vec::new();
 
@@ -84,6 +95,7 @@ fn serve(serve: Serve) {
         match env::var(required_var) {
             // If the var exists, add it to the var values vec
             Ok(var) => var_values.push(var),
+
             // If the var doesn't exist, panic! We need each of the vars to be set in order to
             // work.
             Err(_) => error!("Expected env var {} to be set.", required_var),
