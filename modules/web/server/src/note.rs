@@ -51,10 +51,10 @@ impl<'a> Body<'a> {
     /// use server::note::{Note, Body};
     ///
     /// // Make an empty note
-    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned());
+    /// let mut n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned());
     ///
-    /// let b = n.body().unwrap(); // Get a read/writer for the note
-    /// assert_eq!(b.num_segments(), *n.num_segments());
+    /// let mut b = n.body().unwrap(); // Get a read/writer for the note
+    /// assert_eq!(b.num_segments(), n.num_segments);
     /// ```
     pub fn num_segments(&mut self) -> usize {
         // Check that we have a valid reference to the parent note's segment count
@@ -81,7 +81,7 @@ impl<'a> Body<'a> {
     /// ```
     /// use server::note::{Note, Body};
     ///
-    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
+    /// let mut n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
     /// let mut b = n.body().unwrap(); // Get a read/writer for the body of the note
     /// b.write("Hello, world!".to_string()); // Write a few characters to the note
     /// ```
@@ -152,7 +152,7 @@ impl<'a> Body<'a> {
     /// use server::note::{Note, Body};
     //
     /// // Make a new note
-    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned());
+    /// let mut n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned());
     /// let mut b = n.body().unwrap(); // Get the body of the note
     ///
     /// b.write("Some test message!".to_owned()); // Write something to the note
@@ -233,7 +233,7 @@ impl<'a> Note<'a> {
     /// ```
     /// use server::note::Note;
     ///
-    /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
+    /// let mut n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
     /// let b = n.body().unwrap(); // Get a read-writer for the body of the note
     /// ```
     pub fn body(&mut self) -> Result<Body, Error> {
