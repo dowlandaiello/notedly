@@ -12,3 +12,6 @@ sha3 = "0.8.2"
 serde = {version = "1.0.103", features = ["derive"]}
 clap = { git = "https://github.com/clap-rs/clap" } 
 hex = "0.4.0"
+log = "0.4.8"
+env_logger = "0.7.1"
+couchbase = "1.0.0-alpha.2"

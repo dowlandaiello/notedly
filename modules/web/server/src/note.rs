@@ -20,6 +20,9 @@ pub enum Error {
 
     #[snafu(display("Could not write to the note titled {}: {}", filename, source))]
     WriteNote { filename: String, source: IoError },
+
+    #[snafu(display("Could not read the note: {}", source))]
+    ReadNote { source: IoError },
 }
 
 /// The contents of a note.
@@ -59,11 +62,11 @@ impl<'a> Body<'a> {
     pub fn num_segments(&mut self) -> usize {
         // Check that we have a valid reference to the parent note's segment count
         if let Some(num_segments) = self.num_segments.take() {
-            let num = (*num_segments); // Get the number of segments contained in the note
+            let num = *num_segments; // Get the number of segments contained in the note
 
             self.num_segments.replace(num_segments); // Again, idk
 
-            return num; // Return the number of segments
+            num // Return the number of segments
         } else {
             0
         }
@@ -107,12 +110,9 @@ impl<'a> Body<'a> {
                 }
 
                 // Write the segment to the file
-                match file.write(segment.as_bytes()) {
-                    Ok(_) => {
-                        num_written += 1;
-                    }
-                    Err(_) => (),
-                };
+                if file.write(segment.as_bytes()).is_ok() {
+                    num_written += 1;
+                }
 
                 // Check if the loop should be done
                 if segment.len() < 8 {
@@ -158,22 +158,31 @@ impl<'a> Body<'a> {
     /// b.write("Some test message!".to_owned()); // Write something to the note
     /// println!("{}", b.read(1)[0]); // => "Some tes"
     /// ```
-    pub fn read(&mut self, n_segments: usize) -> Vec<String> {
+    pub fn read(&mut self, n_segments: usize) -> Result<Vec<String>, Error> {
         // Check that we have actually opened the corresponding file
         if let Some(mut file) = self.file.take() {
             // The result of the read operation should contain n segments. Allocate it as such.
             let mut result: Vec<String> = vec!["".to_owned(); n_segments];
 
-            // Perform the read operation n_segments times
-            for i in 0..n_segments {
-                Read::by_ref(&mut file)
-                    .take(32)
-                    .read_to_string(&mut result[i]); // Read 8 characters into the result buf
+            // If an error occurs during reading, alert the user
+            let mut resultant_e: Option<IoError> = None;
+
+            // Read each of the segments
+            for segment in result.iter_mut().take(n_segments) {
+                // Read the segment, and check for errors
+                if let Err(e) = Read::by_ref(&mut file).take(32).read_to_string(segment) {
+                    resultant_e = Some(e); // Propogate the error
+                }
             }
 
-            result // Return the segments we could read from the file
+            // Check for any errors while reading
+            if let Some(e) = resultant_e {
+                Err(Error::ReadNote { source: e }) // Return a ReadNote error
+            } else {
+                Ok(result) // Return the segments we could read from the file
+            }
         } else {
-            Vec::new() // Return an empty vector, since we can't read from an unopened file
+            Ok(Vec::new()) // Return an empty vector, since we can't read from an unopened file
         }
     }
 
@@ -189,7 +198,7 @@ impl<'a> Body<'a> {
 
 /// A note on a given board, authored by a particular user.
 #[derive(Serialize, Deserialize)]
-pub struct Note<'a> {
+pub struct Note {
     /// The title of the note
     pub title: String,
 
@@ -198,13 +207,9 @@ pub struct Note<'a> {
 
     /// The number of segments contained in the note
     pub num_segments: usize,
-
-    /// The body of the note
-    #[serde(skip)]
-    body: Body<'a>,
 }
 
-impl<'a> Note<'a> {
+impl Note {
     /// Initializes and returns a new note with the given author.
     ///
     /// # Example
@@ -214,15 +219,11 @@ impl<'a> Note<'a> {
     ///
     /// let n = Note::new("dowlandaiello@gmail.com".to_owned(), "Untitled".to_owned()); // Make a new note
     /// ```
-    pub fn new(author: String, title: String) -> Note<'a> {
+    pub fn new(author: String, title: String) -> Note {
         Note {
             title: author,
             author: title,
             num_segments: 0,
-            body: Body {
-                file: None,
-                num_segments: None,
-            },
         } // Return the new note
     }
 

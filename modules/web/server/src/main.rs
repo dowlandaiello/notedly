@@ -1,6 +1,11 @@
 #[macro_use]
 extern crate clap;
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
+use log::LevelFilter::{Debug, Info};
 use std::env;
 use tokio::runtime::current_thread;
 
@@ -8,6 +13,14 @@ use tokio::runtime::current_thread;
 #[derive(Clap)]
 #[clap(version = "1.0", author = "Dowland A.")]
 struct Opts {
+    /// Print debug info
+    #[clap(short = "d", long = "debug")]
+    debug: bool,
+
+    /// Prevent any non-critical information from being printed to the console
+    #[clap(short = "s", long = "silent")]
+    silent: bool,
+
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
@@ -15,7 +28,8 @@ struct Opts {
 /// A subcommand of the notedly CLI.
 #[derive(Clap)]
 enum SubCommand {
-    /// Starts the notedly API web server.
+    /// Starts the notedly API web server
+    #[clap(name = "serve", version = "1.0", author = "Dowland A.")]
     Serve(Serve),
 }
 
@@ -25,17 +39,23 @@ enum SubCommand {
 #[derive(Clap)]
 #[clap(name = "serve", version = "1.0", author = "Dowland A.")]
 struct Serve {
-    /// Print debug info
-    #[clap(short = "d")]
-    debug: bool,
     /// The port the API will be served on
-    #[clap(short = "p")]
+    #[clap(short = "p", default_value = "8080")]
     port: u16,
 }
 
 /// The entry point for the notedly CLI.
 fn main() {
     let opts: Opts = Opts::parse(); // Parse any arguments issued by the user
+
+    // Configure the logger
+    if !opts.silent {
+        if opts.debug {
+            env_logger::builder().filter_level(Debug).init(); // Include debug statements in logger output
+        } else {
+            env_logger::builder().filter_level(Info).init(); // Include info statements
+        }
+    }
 
     // Check if the user is trying to start the web server or just use the CLI
     match opts.subcmd {
@@ -66,7 +86,7 @@ fn serve(serve: Serve) {
             Ok(var) => var_values.push(var),
             // If the var doesn't exist, panic! We need each of the vars to be set in order to
             // work.
-            Err(_) => panic!("Expected env var {} to be set.", required_var),
-        }
+            Err(_) => error!("Expected env var {} to be set.", required_var),
+        };
     }
 }
