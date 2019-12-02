@@ -5,10 +5,13 @@ extern crate clap;
 extern crate log;
 extern crate env_logger;
 
+extern crate dotenv;
+
 use log::LevelFilter::{Debug, Info};
 use server::api::server::{DatabaseConfig, OauthConfig, Server};
-use std::{convert::TryInto, env};
+use std::env;
 use tokio::runtime::current_thread;
+use dotenv::dotenv;
 
 /// The notedly command-line interface.
 #[derive(Clap)]
@@ -51,6 +54,9 @@ struct Serve {
 
 /// The entry point for the notedly CLI.
 fn main() {
+    // Load any configuration vars from dotfiles
+    dotenv().ok();
+
     let opts: Opts = Opts::parse(); // Parse any arguments issued by the user
 
     // Configure the logger
@@ -100,16 +106,16 @@ fn serve(serve: Serve) {
     // If the user hasn't provided the required variables, return
     if var_values.len() == required_vars.len() {
         // Make a new oauth config from the collected env variables
-        let oauth_config = OauthConfig::new(var_values[..4].try_into().unwrap_or_else(|_| {
-            panic!(
-                "Should have collected {} env var values.",
-                required_vars.len()
-            )
-        }));
+        let (oauth_config, mut var_values) = OauthConfig::new(var_values);
 
-        let db_config = DatabaseConfig::new
+        // Make a newe database config from the collected env variables, as well as the inputted
+        // command arguments
+        let db_config = DatabaseConfig::new(serve.database_endpoint, var_values.remove(0), var_values.remove(0));
 
         // Make a new server from the generated oauth config
-        let s = Server::new(oauth_config, databasee, serve.port);
+        let s = Server::new(oauth_config, db_config, serve.port);
+
+        // Start the server
+        s.start();
     }
 }

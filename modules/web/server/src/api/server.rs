@@ -19,12 +19,12 @@ impl OauthConfig {
     /// * `oauth_credentials` - A vector of environment variables representing the following oauth
     /// API credentials: github client ID, github client secret, google client ID, google client
     /// secret
-    pub fn new(mut oauth_credentials: Vec<String>) -> Self {
-        // Return the initialized OauthConfig
-        OauthConfig {
+    pub fn new(mut oauth_credentials: Vec<String>) -> (Self, Vec<String>) {
+        // Return the initialized OauthConfig, as well as the remaining env vars
+        (OauthConfig {
             github_api_credentials: (oauth_credentials.remove(0), oauth_credentials.remove(0)),
             google_api_credentials: (oauth_credentials.remove(0), oauth_credentials.remove(0)),
-        }
+        }, oauth_credentials)
     }
 }
 
