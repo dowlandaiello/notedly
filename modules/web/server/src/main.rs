@@ -3,15 +3,13 @@ extern crate clap;
 
 #[macro_use]
 extern crate log;
-extern crate env_logger;
 
 extern crate dotenv;
 
-use log::LevelFilter::{Debug, Info};
-use server::api::server::{DatabaseConfig, OauthConfig, Server};
-use std::env;
-use tokio::runtime::current_thread;
 use dotenv::dotenv;
+use log::LevelFilter::{Debug, Info};
+use server::api::server::{OauthConfig, Server};
+use std::{env, io};
 
 /// The notedly command-line interface.
 #[derive(Clap)]
@@ -46,14 +44,10 @@ struct Serve {
     /// The port the API will be served on
     #[clap(short = "p", default_value = "8080")]
     port: u16,
-
-    /// The remote db connection endpoint
-    #[clap(short = "e", default_value = "couchbase://0.0.0.0")]
-    database_endpoint: String,
 }
 
 /// The entry point for the notedly CLI.
-fn main() {
+fn main() -> io::Result<()> {
     // Load any configuration vars from dotfiles
     dotenv().ok();
 
@@ -80,7 +74,7 @@ fn main() {
 /// # Arguments
 ///
 /// * `serve` - A config for the serve command
-fn serve(serve: Serve) {
+fn serve(serve: Serve) -> io::Result<()> {
     // The names of the environment variables where we expect that the oauth config & couchbase
     // credentials have been stored
     let required_vars = [
@@ -88,6 +82,7 @@ fn serve(serve: Serve) {
         "GITHUB_OAUTH_CLIENT_SECRET",
         "GOOGLE_OAUTH_CLIENT_ID",
         "GOOGLE_OAUTH_CLIENT_SECRET",
+        "DATABASE_URL",
     ];
     let mut var_values: Vec<String> = Vec::new();
 
@@ -106,16 +101,14 @@ fn serve(serve: Serve) {
     // If the user hasn't provided the required variables, return
     if var_values.len() == required_vars.len() {
         // Make a new oauth config from the collected env variables
-        let (oauth_config, mut var_values) = OauthConfig::new(var_values);
-
-        // Make a newe database config from the collected env variables, as well as the inputted
-        // command arguments
-        let db_config = DatabaseConfig::new(serve.database_endpoint, var_values.remove(0), var_values.remove(0));
+        let (oauth_config, mut rem_values) = OauthConfig::new(var_values);
 
         // Make a new server from the generated oauth config
-        let s = Server::new(oauth_config, db_config, serve.port);
+        let s = Server::new(oauth_config, rem_values.remove(0), serve.port);
 
         // Start the server
-        s.start();
+        s.start()
+    } else {
+        Ok(()) // Nothing to do, stop the main fn!
     }
 }
