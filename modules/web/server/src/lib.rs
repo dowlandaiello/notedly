@@ -1,5 +1,6 @@
 pub mod note;
 pub mod user;
+pub mod api;
 
 extern crate hex;
 extern crate reqwest;

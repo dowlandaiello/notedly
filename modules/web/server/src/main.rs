@@ -6,7 +6,8 @@ extern crate log;
 extern crate env_logger;
 
 use log::LevelFilter::{Debug, Info};
-use std::env;
+use server::api::server::{DatabaseConfig, OauthConfig, Server};
+use std::{convert::TryInto, env};
 use tokio::runtime::current_thread;
 
 /// The notedly command-line interface.
@@ -43,14 +44,9 @@ struct Serve {
     #[clap(short = "p", default_value = "8080")]
     port: u16,
 
-    /// The remote couchbase db cluster connection endpoint
-    #[clap(short = "c", default_value = "couchbase://0.0.0.0")]
-    couchbase_endpoint: String,
-
-    /// The username of the administrator couchbase cluster account that will be used for user data
-    /// storage and retrieval
-    #[clap(short = "u", default_value = "Administrator")]
-    couchbase_administrator_username: String,
+    /// The remote db connection endpoint
+    #[clap(short = "e", default_value = "couchbase://0.0.0.0")]
+    database_endpoint: String,
 }
 
 /// The entry point for the notedly CLI.
@@ -86,7 +82,6 @@ fn serve(serve: Serve) {
         "GITHUB_OAUTH_CLIENT_SECRET",
         "GOOGLE_OAUTH_CLIENT_ID",
         "GOOGLE_OAUTH_CLIENT_SECRET",
-        "COUCHBASE_CLUSTER_ADMIN_PASSWORD",
     ];
     let mut var_values: Vec<String> = Vec::new();
 
@@ -100,5 +95,21 @@ fn serve(serve: Serve) {
             // work.
             Err(_) => error!("Expected env var {} to be set.", required_var),
         };
+    }
+
+    // If the user hasn't provided the required variables, return
+    if var_values.len() == required_vars.len() {
+        // Make a new oauth config from the collected env variables
+        let oauth_config = OauthConfig::new(var_values[..4].try_into().unwrap_or_else(|_| {
+            panic!(
+                "Should have collected {} env var values.",
+                required_vars.len()
+            )
+        }));
+
+        let db_config = DatabaseConfig::new
+
+        // Make a new server from the generated oauth config
+        let s = Server::new(oauth_config, databasee, serve.port);
     }
 }
