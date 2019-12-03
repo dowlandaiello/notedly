@@ -1,4 +1,4 @@
-use actix_web::{App, HttpServer};
+use actix_web::{middleware::Logger, App, HttpServer};
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
@@ -84,7 +84,7 @@ impl Server {
             {
                 match HttpServer::new(move || {
                     // Register all of the API's routes, and attach the db connection handler
-                    App::new().data(pool.clone())
+                    App::new().wrap(Logger::default()).data(pool.clone())
                 })
                 .bind(format!("localhost:{}", self.port))
                 {

@@ -1,6 +1,4 @@
 pub mod api;
-pub mod note;
-pub mod user;
 
 #[macro_use]
 extern crate log;

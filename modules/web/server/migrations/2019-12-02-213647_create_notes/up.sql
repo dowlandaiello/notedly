@@ -8,7 +8,7 @@ CREATE TABLE users (
 
 CREATE TABLE boards (
     -- The hash of the board's name and owner
-    id CHAR(64) PRIMARY KEY,
+    id TEXT PRIMARY KEY,
 
     -- The email address of the owner of the board
     owner TEXT NOT NULL, 
@@ -25,7 +25,7 @@ CREATE TABLE boards (
 
 CREATE TABLE notes (
     -- The hash of the post's name and author
-    id CHAR(64) PRIMARY KEY,
+    id TEXT PRIMARY KEY,
 
     -- The author of the post
     author TEXT NOT NULL,
