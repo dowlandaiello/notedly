@@ -84,6 +84,8 @@ fn serve(serve: Serve) -> io::Result<()> {
         "GOOGLE_OAUTH_CLIENT_SECRET",
         "DATABASE_URL",
     ];
+
+    // The values of each environment variable, which we'll collect in a moment
     let mut var_values: Vec<String> = Vec::new();
 
     // Iterate through each of the desired ENV variables
@@ -104,7 +106,7 @@ fn serve(serve: Serve) -> io::Result<()> {
         let (oauth_config, mut rem_values) = OauthConfig::new(var_values);
 
         // Make a new server from the generated oauth config
-        let s = Server::new(oauth_config, rem_values.remove(0), serve.port);
+        let mut s = Server::new(oauth_config, rem_values.remove(0), serve.port);
 
         // Start the server
         s.start()
