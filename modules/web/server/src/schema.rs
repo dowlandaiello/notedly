@@ -1,6 +1,7 @@
 table! {
     boards (id) {
-        id -> Bpchar,
+        id -> Text,
+        user_id -> Text,
         owner -> Text,
         title -> Text,
         visibility -> Int2,
@@ -10,7 +11,8 @@ table! {
 
 table! {
     notes (id) {
-        id -> Bpchar,
+        id -> Text,
+        user_id -> Text,
         author -> Text,
         title -> Text,
         body -> Text,
@@ -24,8 +26,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    boards,
-    notes,
-    users,
-);
+allow_tables_to_appear_in_same_query!(boards, notes, users,);

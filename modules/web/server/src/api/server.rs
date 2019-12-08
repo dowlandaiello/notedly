@@ -1,3 +1,4 @@
+use super::oauth;
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
 use diesel::{
@@ -6,7 +7,6 @@ use diesel::{
 };
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use rand::Rng;
-use super::oauth;
 use std::io;
 
 /// A configuration for the server's oauth capabilities.
@@ -93,7 +93,7 @@ impl Server {
     /// * `database_endpoint` - The active database connection URI
     /// * `port` - The port that the API will be served on
     pub fn new(mut oauth_config: OauthConfig, database_endpoint: String, port: u16) -> Self {
-        let callback_url = format!("http://localhost:{}/oauth/cb", port); // Get the oauth callback url
+        let callback_url = format!("http://localhost:{}/api/oauth/cb", port); // Get the oauth callback url
 
         // Set the redirect URL for both clients
         oauth_config.google_api_client = oauth_config
@@ -136,11 +136,11 @@ impl Server {
                     // Register all of the API's routes, and attach the db connection handler
                     App::new()
                         .wrap(Logger::default())
-                        .wrap(CookieSession::signed(&encryption_key).secure(true)) // Use secure session storage to store state vars, pkce challenges
+                        .wrap(CookieSession::private(&encryption_key).secure(false)) // Use secure session storage to store state vars, pkce challenges
                         .data(pool.clone()) // Allow usage of the db connector from API routes
                         .data(cfg.clone()) // Allow access to the oauth configuration from request handlers
-                        .data(encryption_key) // Allow access to the encryption key from request handlers
                         .service(oauth::authenticate) // Register the authentication oauth service
+                        .service(oauth::callback) // Register the oauth callback service
                 })
                 .bind(format!("localhost:{}", self.port))
                 {
