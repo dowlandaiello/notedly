@@ -6,20 +6,20 @@ edition = "2018"
 
 [dependencies]
 tokio = "0.2.0-alpha.6"
-reqwest = {version = "0.10.0-alpha.2", features = ["json"]}
+reqwest = { version = "0.10.0-alpha.2", features = ["json"] }
 snafu = "0.6.0"
 sha3 = "0.8.2"
-serde = {version = "1.0.103", features = ["derive"]}
+serde = { version = "1.0.103", features = ["derive"] }
 clap = { git = "https://github.com/clap-rs/clap" } 
 hex = "0.4.0"
 log = "0.4.8"
 env_logger = "0.7.1"
-diesel = { version = "1.0.0", features = ["postgres", "r2d2"]  }
-actix-web = "2.0.0-alpha.1"
+diesel = { version = "1.0.0", features = ["postgres", "r2d2", "numeric", "serde_json"]  }
+actix-web = { version = "2.0.0-alpha.1", features = ["default", "openssl"] }
 oauth2 = "3.0.0-alpha.6"
 dotenv = "0.15.0"
 r2d2 = "0.8.7"
 r2d2_postgres = "0.14.0"
-diesel_as_jsonb = "0.1.2"
 rand = "0.7.2"
+serde_json = "1.0.44"
 actix-session = "0.3.0-alpha.1"
