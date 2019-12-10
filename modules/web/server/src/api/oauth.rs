@@ -1,21 +1,25 @@
-use super::server::OauthConfig;
+use super::{
+    super::{model, schema::users::dls::*},
+    server::OauthConfig,
+    wrapper,
+};
 use actix_session::Session;
 use actix_web::{
-    client::Client,
-    http,
+    error, http,
     web::{Data, Path, Query},
     Error, HttpResponse,
 };
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
+    RunQueryDsl,
 };
 use oauth2::{
     reqwest::http_client, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
 };
+use rand;
 use serde::{Deserialize, Serialize};
-use std::default::Default;
 
 /// Generates a pkce challenge, and forwards the user to the respective authentication portal.
 #[get("/api/oauth/login/{provider}")]
@@ -70,53 +74,6 @@ pub struct CallbackRequest {
     pub state: String,
 }
 
-/// A response from the GitHub API for the user's emails.
-#[derive(Serialize, Deserialize, Debug)]
-struct GitHubEmailResponse {
-    pub emails: Vec<GitHubEmail>,
-}
-
-impl GitHubEmailResponse {
-    /// Gets the most suitable email of the available GitHub emails.
-    pub fn best_email(&self) -> &GitHubEmail {
-        // We'll use the first email until we find a better one
-        let mut best = &self.emails[0];
-
-        // Iterate through the emails
-        for i in 0..self.emails.len() {
-            let email = &self.emails[i]; // Get a reference to the email
-
-            // Check if the email is at least verified
-            if email.verified {
-                best = email; // Set the new best email
-
-                if email.primary {
-                    break; // Stop, use the best possible email
-                }
-            }
-        }
-
-        best // Return the best email
-    }
-}
-
-/// A GitHub preference regarding a user's email.
-#[derive(Serialize, Deserialize, Debug)]
-struct GitHubEmail {
-    /// The email from the response
-    pub email: String,
-
-    /// Whether or not the email has been verified
-    pub verified: bool,
-
-    /// Whether or not the email is a primary email
-    pub primary: bool,
-
-    /// The visibility of the email
-    #[serde(skip)]
-    visibility: String,
-}
-
 /// Authenticates the user with a given authorization code.
 #[get("/api/oauth/cb")]
 pub async fn callback(
@@ -150,38 +107,43 @@ pub async fn callback(
                     // Get an access token from the response
                     let access_token = response.access_token();
 
-                    // Get a HTTP client so we can obtain the email of the user
-                    let client = Client::default();
+                    let user = wrapper::User::new(
+                        access_token.secret().to_owned(),
+                        session.get::<String>("provider")?.unwrap_or("".to_owned()),
+                    ); // Generate a new wrapper for the user API from the acess token and provider
 
-                    // Get a request URL based on the given provider cookie
-                    let request_url =
-                        if &session.get::<String>("provider")?.unwrap_or("".to_owned()) == "google"
-                        {
-                            "https://openidconnect.googleapis.com/v1/userinfo"
-                        } else {
-                            "https://api.github.com/user/emails"
-                        };
+                    // Generate a user with an empty UID (we'll set it later)
+                    let schema_user = model::User {
+                        email: email.id().await?,
+                        id: 0,
+                    };
 
-                    // Get the user's email from the access token
-                    let email = client
-                        .get(request_url) // Make a request to the respective user API
-                        .set_header(
-                            "Authorization",
-                            format!("Bearer {}", access_token.secret().as_str()),
-                        ) // Use our new access token
-                        .set_header("User-Agent", "Notedly") // And make sure the request will be made on behalf of the user from actix
-                        .send() // Send the request
-                        .await?
-                        .json::<GitHubEmailResponse>()
-                        .await?.best_email().email;
+                    // Get a connection from the pool
+                    match pool.get() {
+                        Ok(conn) => {
+                            schema_user.id = user.id().await?; // Generate a unique ID for the user
 
-                    println!("{}", email);
+                            diesel::insert_into(users)
+                                .values(&schema_user)
+                                .execute(&conn)?; // Put the new user in the DB
 
-                    Ok(HttpResponse::Conflict().finish())
+                            // Save the token in a session cookie
+                            session.set::<String>("token", access_token.secret().to_owned());
+
+                            // Save the user's profile in a session cookie
+                            session.set::<model::User>("profile", schema_user);
+
+                            // Respond with a 201
+                            Ok(HttpResponse::Created().finish())
+                        }
+
+                        // Return the error in a response
+                        Err(e) => Err(error::InternalServerError(e)),
+                    }
                 }
 
                 // Handle any errors by returning a 500
-                Err(_) => Ok(HttpResponse::InternalServerError().finish()),
+                Err(e) => Err(error::InternalServerError(e)),
             }
         } else {
             // Return a 500 error, since we can't continue with out a pkce verifier

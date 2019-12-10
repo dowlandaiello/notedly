@@ -10,7 +10,7 @@ pub struct User {
     pub email: String,
 
     /// The hash of the user's oauth access token
-    pub id: String,
+    pub id: i32,
 }
 
 #[derive(
@@ -23,10 +23,7 @@ pub struct Board {
     pub id: String,
 
     /// The ID of the user that the board is owned by
-    pub user_id: String,
-
-    /// The email of the board's owner
-    pub owner: String,
+    pub user_id: i32,
 
     /// The title of the board
     pub title: String,
@@ -48,10 +45,7 @@ pub struct Note {
     pub id: String,
 
     /// The ID of the user that the note is owned by
-    pub user_id: String,
-
-    /// The email of the user that the note was authored by
-    pub author: String,
+    pub user_id: i32,
 
     /// The title of the note
     pub title: String,

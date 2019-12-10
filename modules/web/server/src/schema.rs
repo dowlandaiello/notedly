@@ -1,8 +1,7 @@
 table! {
     boards (id) {
         id -> Text,
-        user_id -> Text,
-        owner -> Text,
+        user_id -> Int4,
         title -> Text,
         visibility -> Int2,
         permissions -> Nullable<Jsonb>,
@@ -12,8 +11,7 @@ table! {
 table! {
     notes (id) {
         id -> Text,
-        user_id -> Text,
-        author -> Text,
+        user_id -> Int4,
         title -> Text,
         body -> Text,
     }
@@ -22,8 +20,12 @@ table! {
 table! {
     users (email) {
         email -> Text,
-        id -> Text,
+        id -> Int4,
     }
 }
 
-allow_tables_to_appear_in_same_query!(boards, notes, users,);
+allow_tables_to_appear_in_same_query!(
+    boards,
+    notes,
+    users,
+);
