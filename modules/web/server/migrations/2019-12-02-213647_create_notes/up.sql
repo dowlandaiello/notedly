@@ -1,19 +1,19 @@
 CREATE TABLE users (
-    -- The user's email
-    email TEXT PRIMARY KEY, 
+    -- The user's oauth identifier
+    oauth_id INTEGER PRIMARY KEY, 
 
-    -- A hash of the user's oauth access token
-    id TEXT NOT NULL
+    -- The user's ID
+    id SERIAL
 );
 
 CREATE TABLE boards (
     -- The hash of the board's name and owner
-    id TEXT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
 
-    -- The email address of the owner of the board
-    owner TEXT NOT NULL, 
+    -- The ID of the board's owner
+    user_id INTEGER,
 
-    -- The name of the board
+    -- The title of the board
     title TEXT NOT NULL,
 
     -- The privacy setting of the board (0 => private, 1 => unlisted, 2 => permissive)
@@ -25,10 +25,10 @@ CREATE TABLE boards (
 
 CREATE TABLE notes (
     -- The hash of the post's name and author
-    id TEXT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
 
-    -- The author of the post
-    author TEXT NOT NULL,
+    -- The ID of the board's owner
+    user_id INTEGER,
 
     -- The title of the post
     title TEXT NOT NULL,

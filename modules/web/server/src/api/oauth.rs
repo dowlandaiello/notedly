@@ -1,5 +1,5 @@
 use super::{
-    super::{model, schema::users::dls::*},
+    super::{model, schema::users::dsl::*},
     server::OauthConfig,
     wrapper,
 };
@@ -18,7 +18,6 @@ use oauth2::{
     reqwest::http_client, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
 };
-use rand;
 use serde::{Deserialize, Serialize};
 
 /// Generates a pkce challenge, and forwards the user to the respective authentication portal.
@@ -112,17 +111,14 @@ pub async fn callback(
                         session.get::<String>("provider")?.unwrap_or("".to_owned()),
                     ); // Generate a new wrapper for the user API from the acess token and provider
 
-                    // Generate a user with an empty UID (we'll set it later)
-                    let schema_user = model::User {
-                        email: email.id().await?,
-                        id: 0,
+                    // Generate a user with an empty UID (postgres will figure this out)
+                    let schema_user = model::NewUser {
+                        email: user.email().await?,
                     };
 
                     // Get a connection from the pool
                     match pool.get() {
                         Ok(conn) => {
-                            schema_user.id = user.id().await?; // Generate a unique ID for the user
-
                             diesel::insert_into(users)
                                 .values(&schema_user)
                                 .execute(&conn)?; // Put the new user in the DB
@@ -138,12 +134,12 @@ pub async fn callback(
                         }
 
                         // Return the error in a response
-                        Err(e) => Err(error::InternalServerError(e)),
+                        Err(e) => Err(error::ErrorInternalServerError(e)),
                     }
                 }
 
                 // Handle any errors by returning a 500
-                Err(e) => Err(error::InternalServerError(e)),
+                Err(e) => Err(error::ErrorInternalServerError(e)),
             }
         } else {
             // Return a 500 error, since we can't continue with out a pkce verifier

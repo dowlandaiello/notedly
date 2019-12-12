@@ -1,7 +1,7 @@
 table! {
     boards (id) {
         id -> Text,
-        user_id -> Int4,
+        user_id -> Nullable<Int4>,
         title -> Text,
         visibility -> Int2,
         permissions -> Nullable<Jsonb>,
@@ -11,7 +11,7 @@ table! {
 table! {
     notes (id) {
         id -> Text,
-        user_id -> Int4,
+        user_id -> Nullable<Int4>,
         title -> Text,
         body -> Text,
     }

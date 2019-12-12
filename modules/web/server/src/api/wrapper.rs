@@ -1,11 +1,10 @@
-use super::super::schema::users::dls::*;
+use super::super::schema::users::dsl::*;
 use actix_web::{client::Client, Error};
 use diesel::{
     pg::PgConnection,
+    dsl::*,
     r2d2::{ConnectionManager, PooledConnection},
 };
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 

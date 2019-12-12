@@ -13,6 +13,13 @@ pub struct User {
     pub id: i32,
 }
 
+#[derive(Insertable)]
+#[table_name = "users"]
+pub struct NewUser<'a> {
+    /// The email of the new user
+    pub email: &'a str,
+}
+
 #[derive(
     Serialize, Deserialize, Insertable, Identifiable, Queryable, Associations, PartialEq, Debug,
 )]
