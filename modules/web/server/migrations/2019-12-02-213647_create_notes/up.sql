@@ -2,6 +2,12 @@ CREATE TABLE users (
     -- The user's oauth identifier
     oauth_id INTEGER PRIMARY KEY, 
 
+    -- The user's current oauth access token hash
+    oauth_token TEXT,
+
+    -- The user's email
+    email TEXT,
+
     -- The user's ID
     id SERIAL
 );

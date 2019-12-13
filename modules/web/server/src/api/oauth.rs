@@ -119,18 +119,24 @@ pub async fn callback(
                     // Get a connection from the pool
                     match pool.get() {
                         Ok(conn) => {
-                            diesel::insert_into(users)
+                            // Put the new user in the DB
+                            match diesel::insert_into(users)
                                 .values(&schema_user)
-                                .execute(&conn)?; // Put the new user in the DB
+                                .execute(&conn) {
+                                    // The operation was completed successfully, 200
+                                    Ok(_) => {
+                                        // Save the token in a session cookie
+                                        session.set::<String>("token", access_token.secret().to_owned());
 
-                            // Save the token in a session cookie
-                            session.set::<String>("token", access_token.secret().to_owned());
+                                        // Respond with a 201
+                                        Ok(HttpResponse::Created().finish())
+                                    },
 
-                            // Save the user's profile in a session cookie
-                            session.set::<model::User>("profile", schema_user);
+                                    // Since an error was thrown, return a 300
+                                    Err(e) => Err(error::ErrorInternalServerError(e)),
+                                }
 
-                            // Respond with a 201
-                            Ok(HttpResponse::Created().finish())
+                            
                         }
 
                         // Return the error in a response

@@ -1,9 +1,13 @@
 use super::super::schema::users::dsl::*;
 use actix_web::{client::Client, Error};
 use diesel::{
-    pg::PgConnection,
+    pg::{PgConnection, Pg},
     dsl::*,
+    QueryDsl,
+    IntoSql,
     r2d2::{ConnectionManager, PooledConnection},
+    expression::AsExpression,
+    sql_types::Text,
 };
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -42,17 +46,17 @@ impl GitHubEmailResponse {
     /// Gets the most suitable email of the available GitHub emails.
     pub fn best_email(&self) -> &GitHubEmail {
         // We'll use the first email until we find a better one
-        let mut best = &self.emails[0];
+        let mut best: &GitHubEmail = &self.emails[0];
 
         // Iterate through the emails
         for i in 0..self.emails.len() {
-            let email = &self.emails[i]; // Get a reference to the email
+            let gh_email: &GitHubEmail = &self.emails[i]; // Get a reference to the email
 
             // Check if the email is at least verified
-            if email.verified {
-                best = email; // Set the new best email
+            if gh_email.verified {
+                best = gh_email; // Set the new best email
 
-                if email.primary {
+                if gh_email.primary {
                     break; // Stop, use the best possible email
                 }
             }
@@ -83,6 +87,7 @@ impl User {
     /// Initializes a new user from the given access token and provider.
     pub fn new(access_token: String, provider: String) -> Self {
         Self {
+            email: "".to_owned(),
             access_token,
             provider,
             client: Client::default(),
@@ -97,7 +102,7 @@ impl User {
     /// existence
     pub fn exists(&self, conn: PooledConnection<ConnectionManager<PgConnection>>) -> bool {
         // Run a query that will check if the email is contained in the database
-        select(exists(users.find(self.email)))
+        select(exists(users.find(self.email.into_sql::<Text>())))
             .get_result(&conn)
             .unwrap_or(false)
     }
@@ -112,7 +117,7 @@ impl User {
         if !self.exists(conn) {
             None
         } else {
-            diesel::select(users.find(self.email)).get_result(&conn) // Return the user's ID
+            diesel::select(users.find(self.email)).get_result(&conn).ok() // Return the user's ID
         }
     }
 

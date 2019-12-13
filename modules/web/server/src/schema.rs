@@ -1,6 +1,6 @@
 table! {
     boards (id) {
-        id -> Text,
+        id -> Int4,
         user_id -> Nullable<Int4>,
         title -> Text,
         visibility -> Int2,
@@ -10,7 +10,7 @@ table! {
 
 table! {
     notes (id) {
-        id -> Text,
+        id -> Int4,
         user_id -> Nullable<Int4>,
         title -> Text,
         body -> Text,
@@ -18,8 +18,10 @@ table! {
 }
 
 table! {
-    users (email) {
-        email -> Text,
+    users (oauth_id) {
+        oauth_id -> Int4,
+        oauth_token -> Nullable<Text>,
+        email -> Nullable<Text>,
         id -> Int4,
     }
 }

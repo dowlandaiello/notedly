@@ -20,9 +20,7 @@ pub struct NewUser<'a> {
     pub email: &'a str,
 }
 
-#[derive(
-    Serialize, Deserialize, Insertable, Identifiable, Queryable, Associations, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
 #[belongs_to(User)]
 #[table_name = "boards"]
 pub struct Board {
@@ -42,9 +40,7 @@ pub struct Board {
     pub permissions: Value,
 }
 
-#[derive(
-    Serialize, Deserialize, Insertable, Identifiable, Queryable, Associations, PartialEq, Debug,
-)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
 #[belongs_to(User)]
 #[table_name = "notes"]
 pub struct Note {
