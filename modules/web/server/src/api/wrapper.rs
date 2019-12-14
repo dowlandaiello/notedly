@@ -1,16 +1,12 @@
 use super::super::schema::users::dsl::*;
-use actix_web::{client::Client, Error};
+use actix_web::{client::Client, Error, error};
 use diesel::{
-    pg::{PgConnection, Pg},
-    dsl::*,
-    QueryDsl,
-    IntoSql,
+    pg::PgConnection,
     r2d2::{ConnectionManager, PooledConnection},
-    expression::AsExpression,
-    sql_types::Text,
+    QueryDsl,
 };
 use serde::{Deserialize, Serialize};
-use std::default::Default;
+use std::{default::Default, io};
 
 /// A wrapper for each of the respective oauth provider APIs (Google, GitHub).
 pub struct User {
@@ -83,6 +79,13 @@ struct GitHubEmail {
     visibility: String,
 }
 
+/// A GitHub user ID.
+#[derive(Serialize, Deserialize)]
+struct GitHubIDResponse {
+    /// The ID of the user
+    id: i32,
+}
+
 impl User {
     /// Initializes a new user from the given access token and provider.
     pub fn new(access_token: String, provider: String) -> Self {
@@ -94,46 +97,80 @@ impl User {
         } // Return the new instance
     }
 
-    /// Checks if a user with the email exists in the database.
+    /// Gets the URL of the account's oauth provider.
     ///
     /// # Arguments
     ///
-    /// * `conn` - The connection to the database that will be used to check for the user's
-    /// existence
-    pub fn exists(&self, conn: PooledConnection<ConnectionManager<PgConnection>>) -> bool {
-        // Run a query that will check if the email is contained in the database
-        select(exists(users.find(self.email.into_sql::<Text>())))
-            .get_result(&conn)
-            .unwrap_or(false)
+    /// * `postfix` - A string appended to the end of the provider url
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use server::api::wrapper::User;
+    //
+    /// // A new GitHub user
+    /// let u = User::new("SOME_ACCESS_TOKEN", "github");
+    ///
+    /// println!("{}", u.provider_url("emails")); // => https://api.github.com/user/emails
+    /// ```
+    pub fn provider_url(&self, postfix: &str) -> String {
+        // Return the respective authentication URL
+        if self.provider == "google" {
+            // Idk some google stuff
+            format!(
+                "https://openidconnect.googleapis.com/v1/userinfo{}",
+                if postfix != "" {
+                    format!("/{}", postfix)
+                } else {
+                    "".to_owned()
+                }
+            )
+        } else {
+            // A URL for all of the information known about the user
+            format!(
+                "https://api.github.com/user{}",
+                if postfix != "" {
+                    format!("/{}", postfix)
+                } else {
+                    "".to_owned()
+                }
+            )
+        }
     }
 
-    /// Gets the ID for the user if the user already exists.
-    ///
-    /// # Arguments
-    ///
-    /// * `conn` - The connection to the database that will be used to find the user's ID
-    pub fn id(&self, conn: PooledConnection<ConnectionManager<PgConnection>>) -> Option<i32> {
-        // If the user doesn't already exist, return a None
-        if !self.exists(conn) {
-            None
+    /// Gets the oauth ID of the user from the known provider.
+    pub async fn oauth_id(&self) -> Result<String, Error> {
+        // Send a request asking for the oauth ID of the user with the matching oauth token, and
+        // await the response from the service
+        let mut response = self
+            .client
+            .get(self.provider_url("")) // Start the request
+            .set_header("Authorization", format!("Bearer {}", self.access_token)) // Tell GitHub which user we would like to get the ID of
+            .set_header("User-Agent", "Notedly") // Make sure GitHub sees this as a valid request
+            .send() // Send the request
+            .await?; // Await the response
+
+        if self.provider == "github" {
+            // Convert the general response to a GitHub response
+            let github_resp: GitHubIDResponse = response.json::<GitHubIDResponse>().await?;
+
+            // Return the identifier of the user as an owned string
+            Ok(github_resp.id.to_string())
         } else {
-            diesel::select(users.find(self.email)).get_result(&conn).ok() // Return the user's ID
+            Err(error::ErrorBadRequest(io::Error::new(
+                io::ErrorKind::Other,
+                "the provider does not exit",
+            ))) // User did something bad
         }
     }
 
     /// Gets the email of the user from the known provider.
-    pub async fn email(&self) -> Result<&str, Error> {
-        let request_url = if self.provider == "google" {
-            "https://openidconnect.googleapis.com/v1/userinfo"
-        } else {
-            "https://api.github.com/user/emails"
-        }; // Get the URL of the prospective request from the known oauth provider
-
+    pub async fn email(&mut self) -> Result<&str, Error> {
         // Send a request asking for the email of the user with the matching oauth token, and await
         // the response from the service
         let mut response = self
             .client
-            .get(request_url) // Start the request
+            .get(self.provider_url("emails")) // Start the request
             .set_header("Authorization", format!("Bearer {}", self.access_token)) // Tell GitHub which user we would like to get the email of by sending our token
             .set_header("User-Agent", "Notedly") // Make sure GitHub sees this as a valid request
             .send() // Send the request

@@ -106,13 +106,14 @@ pub async fn callback(
                     // Get an access token from the response
                     let access_token = response.access_token();
 
-                    let user = wrapper::User::new(
+                    let mut user = wrapper::User::new(
                         access_token.secret().to_owned(),
                         session.get::<String>("provider")?.unwrap_or("".to_owned()),
                     ); // Generate a new wrapper for the user API from the acess token and provider
 
                     // Generate a user with an empty UID (postgres will figure this out)
                     let schema_user = model::NewUser {
+                        
                         email: user.email().await?,
                     };
 
@@ -122,21 +123,21 @@ pub async fn callback(
                             // Put the new user in the DB
                             match diesel::insert_into(users)
                                 .values(&schema_user)
-                                .execute(&conn) {
-                                    // The operation was completed successfully, 200
-                                    Ok(_) => {
-                                        // Save the token in a session cookie
-                                        session.set::<String>("token", access_token.secret().to_owned());
+                                .execute(&conn)
+                            {
+                                // The operation was completed successfully, 200
+                                Ok(_) => {
+                                    // Save the token in a session cookie
+                                    session
+                                        .set::<String>("token", access_token.secret().to_owned())?;
 
-                                        // Respond with a 201
-                                        Ok(HttpResponse::Created().finish())
-                                    },
-
-                                    // Since an error was thrown, return a 300
-                                    Err(e) => Err(error::ErrorInternalServerError(e)),
+                                    // Respond with a 201
+                                    Ok(HttpResponse::Created().finish())
                                 }
 
-                            
+                                // Since an error was thrown, return a 300
+                                Err(e) => Err(error::ErrorInternalServerError(e)),
+                            }
                         }
 
                         // Return the error in a response

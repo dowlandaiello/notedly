@@ -3,10 +3,10 @@ CREATE TABLE users (
     oauth_id INTEGER PRIMARY KEY, 
 
     -- The user's current oauth access token hash
-    oauth_token TEXT,
+    oauth_token TEXT NOT NULL,
 
     -- The user's email
-    email TEXT,
+    email TEXT NOT NULL,
 
     -- The user's ID
     id SERIAL
@@ -17,7 +17,7 @@ CREATE TABLE boards (
     id SERIAL PRIMARY KEY,
 
     -- The ID of the board's owner
-    user_id INTEGER,
+    user_id INTEGER NOT NULL,
 
     -- The title of the board
     title TEXT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE boards (
     visibility SMALLINT NOT NULL,
 
     -- The permissions of the board, per each user
-    permissions JSONB
+    permissions JSONB NOT NULL
 );
 
 CREATE TABLE notes (
@@ -34,7 +34,7 @@ CREATE TABLE notes (
     id SERIAL PRIMARY KEY,
 
     -- The ID of the board's owner
-    user_id INTEGER,
+    user_id INTEGER NOT NULL,
 
     -- The title of the post
     title TEXT NOT NULL,

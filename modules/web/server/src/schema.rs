@@ -1,17 +1,17 @@
 table! {
     boards (id) {
         id -> Int4,
-        user_id -> Nullable<Int4>,
+        user_id -> Int4,
         title -> Text,
         visibility -> Int2,
-        permissions -> Nullable<Jsonb>,
+        permissions -> Jsonb,
     }
 }
 
 table! {
     notes (id) {
         id -> Int4,
-        user_id -> Nullable<Int4>,
+        user_id -> Int4,
         title -> Text,
         body -> Text,
     }
@@ -20,8 +20,8 @@ table! {
 table! {
     users (oauth_id) {
         oauth_id -> Int4,
-        oauth_token -> Nullable<Text>,
-        email -> Nullable<Text>,
+        oauth_token -> Text,
+        email -> Text,
         id -> Int4,
     }
 }

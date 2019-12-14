@@ -6,16 +6,28 @@ use serde_json::Value;
 #[primary_key(email)]
 #[table_name = "users"]
 pub struct User {
+    /// 
+    pub oauth_id: i32,
+
+    /// A hash of the user's current oauth access token
+    pub oauth_token: String,
+
     /// The email of the user
     pub email: String,
 
-    /// The hash of the user's oauth access token
+    /// The user's unique identifier
     pub id: i32,
 }
 
 #[derive(Insertable)]
 #[table_name = "users"]
 pub struct NewUser<'a> {
+    /// The user's oauth identifier
+    pub oauth_id: i32,
+
+    /// The user's current oauth access token hash
+    pub oauth_token: &'a str,
+
     /// The email of the new user
     pub email: &'a str,
 }
