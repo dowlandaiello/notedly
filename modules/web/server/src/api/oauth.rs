@@ -19,6 +19,7 @@ use oauth2::{
     TokenResponse,
 };
 use serde::{Deserialize, Serialize};
+use sha3::{Digest, Sha3_256};
 
 /// Generates a pkce challenge, and forwards the user to the respective authentication portal.
 #[get("/api/oauth/login/{provider}")]
@@ -103,23 +104,28 @@ pub async fn callback(
                 .request(http_client)
             {
                 Ok(response) => {
-                    // Get an access token from the response
-                    let access_token = response.access_token();
-
-                    let mut user = wrapper::User::new(
-                        access_token.secret().to_owned(),
-                        session.get::<String>("provider")?.unwrap_or("".to_owned()),
-                    ); // Generate a new wrapper for the user API from the acess token and provider
-
-                    // Generate a user with an empty UID (postgres will figure this out)
-                    let schema_user = model::NewUser {
-                        
-                        email: user.email().await?,
-                    };
-
                     // Get a connection from the pool
                     match pool.get() {
                         Ok(conn) => {
+                            // Get an access token from the response
+                            let access_token = response.access_token();
+
+                            // Hash the user's access token
+                            let mut token_hasher = Sha3_256::new();
+                            token_hasher.input(access_token.secret());
+
+                            let mut user = wrapper::User::new(
+                                access_token.secret().to_owned(),
+                                session.get::<String>("provider")?.unwrap_or("".to_owned()),
+                            ); // Generate a new wrapper for the user API from the acess token and provider
+
+                            // Generate a user with an empty UID (postgres will figure this out)
+                            let schema_user = model::NewUser {
+                                oauth_id: user.oauth_id().await?,
+                                oauth_token: hex::encode(token_hasher.result()),
+                                email: user.email().await?.to_owned(),
+                            };
+
                             // Put the new user in the DB
                             match diesel::insert_into(users)
                                 .values(&schema_user)

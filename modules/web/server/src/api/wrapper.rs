@@ -139,7 +139,7 @@ impl User {
     }
 
     /// Gets the oauth ID of the user from the known provider.
-    pub async fn oauth_id(&self) -> Result<String, Error> {
+    pub async fn oauth_id(&self) -> Result<i32, Error> {
         // Send a request asking for the oauth ID of the user with the matching oauth token, and
         // await the response from the service
         let mut response = self
@@ -155,7 +155,7 @@ impl User {
             let github_resp: GitHubIDResponse = response.json::<GitHubIDResponse>().await?;
 
             // Return the identifier of the user as an owned string
-            Ok(github_resp.id.to_string())
+            Ok(github_resp.id)
         } else {
             Err(error::ErrorBadRequest(io::Error::new(
                 io::ErrorKind::Other,
