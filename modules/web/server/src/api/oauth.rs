@@ -1,5 +1,5 @@
 use super::{
-    super::{model, schema::users::dsl::*},
+    super::{models, schema::users::dsl::*},
     server::OauthConfig,
     wrapper,
 };
@@ -120,7 +120,7 @@ pub async fn callback(
                             ); // Generate a new wrapper for the user API from the acess token and provider
 
                             // Generate a user with an empty UID (postgres will figure this out)
-                            let schema_user = model::NewUser {
+                            let schema_user = models::NewUser {
                                 oauth_id: user.oauth_id().await?,
                                 oauth_token: hex::encode(token_hasher.result()),
                                 email: user.email().await?.to_owned(),

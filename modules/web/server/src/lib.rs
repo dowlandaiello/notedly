@@ -1,5 +1,5 @@
 pub mod api;
-pub mod model;
+pub mod models;
 pub mod schema;
 
 #[macro_use]
@@ -18,7 +18,6 @@ extern crate oauth2;
 extern crate r2d2;
 extern crate r2d2_postgres;
 extern crate rand;
-extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate sha3;
