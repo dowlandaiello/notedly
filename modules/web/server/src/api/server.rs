@@ -111,7 +111,7 @@ impl Server {
     }
 
     /// Starts the API web server.
-    pub fn start(&mut self) -> io::Result<()> {
+    pub async fn start(&mut self) -> io::Result<()> {
         // Log the pending connection
         info!(
             "Connecting to postgres database (postgres://{}:****@{})",
@@ -130,7 +130,7 @@ impl Server {
             // Start the HTTP server
             {
                 let cfg = self.oauth_config.clone(); // Clone the server's oauth configuration, so we can move it into the server logic closure
-                match HttpServer::new(move || {
+                HttpServer::new(move || {
                     let encryption_key: [u8; 32] = rand::thread_rng().gen::<[u8; 32]>(); // Generate an encryption key
 
                     // Register all of the API's routes, and attach the db connection handler
@@ -142,18 +142,8 @@ impl Server {
                         .service(oauth::authenticate) // Register the authentication oauth service
                         .service(oauth::callback) // Register the oauth callback service
                 })
-                .bind(format!("localhost:{}", self.port))
-                {
-                    // Got a listener on the given port, start it
-                    Ok(ln) => ln.run(),
-
-                    // Log an error
-                    Err(e) => {
-                        error!("Failed to start the API server: {}", e);
-
-                        Ok(())
-                    }
-                }
+                .bind(format!("localhost:{}", self.port))?
+                .start().await
             }
 
             // Log an error

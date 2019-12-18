@@ -47,7 +47,8 @@ struct Serve {
 }
 
 /// The entry point for the notedly CLI.
-fn main() -> io::Result<()> {
+#[actix_rt::main]
+async fn main() -> io::Result<()> {
     // Load any configuration vars from dotfiles
     dotenv().ok();
 
@@ -65,7 +66,7 @@ fn main() -> io::Result<()> {
     // Check if the user is trying to start the web server or just use the CLI
     match opts.subcmd {
         // Start serving
-        SubCommand::Serve(cfg) => serve(cfg),
+        SubCommand::Serve(cfg) => serve(cfg).await,
     }
 }
 
@@ -74,7 +75,7 @@ fn main() -> io::Result<()> {
 /// # Arguments
 ///
 /// * `serve` - A config for the serve command
-fn serve(serve: Serve) -> io::Result<()> {
+async fn serve(serve: Serve) -> io::Result<()> {
     // The names of the environment variables where we expect that the oauth config & couchbase
     // credentials have been stored
     let required_vars = [
@@ -109,7 +110,7 @@ fn serve(serve: Serve) -> io::Result<()> {
         let mut s = Server::new(oauth_config, rem_values.remove(0), serve.port);
 
         // Start the server
-        s.start()
+        s.start().await
     } else {
         Ok(()) // Nothing to do, stop the main fn!
     }

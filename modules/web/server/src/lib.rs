@@ -10,6 +10,8 @@ extern crate env_logger;
 extern crate actix_web;
 extern crate actix_session;
 
+extern crate actix_rt;
+
 #[macro_use]
 extern crate diesel;
 

@@ -5,7 +5,7 @@ authors = ["Dowland Aiello <dowlandaiello@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-tokio = "0.2.0-alpha.6"
+tokio = "0.2.6"
 reqwest = { git = "https://github.com/dowlandaiello/reqwest", features = ["json"] }
 snafu = "0.6.0"
 sha3 = "0.8.2"
@@ -15,7 +15,7 @@ hex = "0.4.0"
 log = "0.4.8"
 env_logger = "0.7.1"
 diesel = { version = "1.0.0", features = ["postgres", "r2d2", "numeric", "serde_json"]  }
-actix-web = { version = "2.0.0-alpha.1", features = ["default", "openssl"] }
+actix-web = { version = "2.0.0-rc", features = ["default", "openssl"] }
 oauth2 = "3.0.0-alpha.6"
 dotenv = "0.15.0"
 r2d2 = "0.8.7"
@@ -23,3 +23,4 @@ r2d2_postgres = "0.14.0"
 rand = "0.7.2"
 serde_json = "1.0.44"
 actix-session = "0.3.0"
+actix-rt = "1.0.0"
