@@ -1,10 +1,4 @@
-use super::super::schema::users::dsl::*;
 use actix_web::{client::Client, Error, error};
-use diesel::{
-    pg::PgConnection,
-    r2d2::{ConnectionManager, PooledConnection},
-    QueryDsl,
-};
 use serde::{Deserialize, Serialize};
 use std::{default::Default, io};
 

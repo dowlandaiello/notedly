@@ -116,9 +116,9 @@ impl Server {
         info!(
             "Connecting to postgres database (postgres://{}:****@{})",
             self.database_endpoint.split("://").collect::<Vec<&str>>()[1]
-                .split(":")
+                .split(':')
                 .collect::<Vec<&str>>()[0],
-            self.database_endpoint.split("@").collect::<Vec<&str>>()[1]
+            self.database_endpoint.split('@').collect::<Vec<&str>>()[1]
         );
 
         let manager = ConnectionManager::<PgConnection>::new(&self.database_endpoint); // Make a new connection manager from the config's db endpoint

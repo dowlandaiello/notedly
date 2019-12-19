@@ -83,12 +83,12 @@ pub async fn callback(
     session: Session,
 ) -> Result<HttpResponse, Error> {
     // Abort the request if the state has been corrupted
-    if info.state != session.get::<String>("state")?.unwrap_or("".to_owned()) {
+    if info.state != session.get::<String>("state")?.unwrap_or_else(|| "".to_owned()) {
         Ok(HttpResponse::Conflict().finish()) // Respond with a 409
     } else {
         let client = match session
             .get::<String>("provider")?
-            .unwrap_or("".to_owned())
+            .unwrap_or_else(|| "".to_owned())
             .as_ref()
         {
             "google" => &data.google_api_client,
@@ -116,7 +116,7 @@ pub async fn callback(
 
                             let mut user = wrapper::User::new(
                                 access_token.secret().to_owned(),
-                                session.get::<String>("provider")?.unwrap_or("".to_owned()),
+                                session.get::<String>("provider")?.unwrap_or_else(|| "".to_owned()),
                             ); // Generate a new wrapper for the user API from the acess token and provider
 
                             // Generate a user with an empty UID (postgres will figure this out)
