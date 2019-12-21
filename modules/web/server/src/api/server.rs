@@ -1,4 +1,4 @@
-use super::oauth;
+use super::{oauth, users};
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
 use diesel::{
@@ -141,8 +141,10 @@ impl Server {
                         .data(cfg.clone()) // Allow access to the oauth configuration from request handlers
                         .service(oauth::authenticate) // Register the authentication oauth service
                         .service(oauth::callback) // Register the oauth callback service
+                        .service(users::all_user_ids) // Register the all users service
+                        .service(users::user_with_id) // Register the GET service for a particular user
                 })
-                .bind(format!("localhost:{}", self.port))?
+                .bind(format!("0.0.0.0:{}", self.port))?
                 .start().await
             }
 

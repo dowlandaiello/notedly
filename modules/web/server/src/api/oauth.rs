@@ -6,7 +6,7 @@ use super::{
 use actix_session::Session;
 use actix_web::{
     error, http,
-    web::{Data, Path, Query},
+    web::{Data, Path, Query, Json},
     Error, HttpResponse,
 };
 use diesel::{
@@ -81,10 +81,15 @@ pub async fn callback(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     data: Data<OauthConfig>,
     session: Session,
-) -> Result<HttpResponse, Error> {
+) -> Result<Json<models::OwnedUser>, Error> {
     // Abort the request if the state has been corrupted
-    if info.state != session.get::<String>("state")?.unwrap_or_else(|| "".to_owned()) {
-        Ok(HttpResponse::Conflict().finish()) // Respond with a 409
+    if info.state
+        != session
+            .get::<String>("state")?
+            .unwrap_or_else(|| "".to_owned())
+    {
+        // Respond with a 409
+        Err(error::ErrorConflict("The state challenge was not completed successfully."))
     } else {
         let client = match session
             .get::<String>("provider")?
@@ -116,19 +121,27 @@ pub async fn callback(
 
                             let mut user = wrapper::User::new(
                                 access_token.secret().to_owned(),
-                                session.get::<String>("provider")?.unwrap_or_else(|| "".to_owned()),
+                                session
+                                    .get::<String>("provider")?
+                                    .unwrap_or_else(|| "".to_owned()),
                             ); // Generate a new wrapper for the user API from the acess token and provider
 
                             // Generate a user with an empty UID (postgres will figure this out)
                             let schema_user = models::NewUser {
                                 oauth_id: user.oauth_id().await?,
-                                oauth_token: hex::encode(token_hasher.result()),
-                                email: user.email().await?.to_owned(),
+                                oauth_token: &hex::encode(token_hasher.result()),
+                                email: user.email().await?,
                             };
 
                             // Put the new user in the DB
                             match diesel::insert_into(users)
                                 .values(&schema_user)
+                                .on_conflict(oauth_id)
+                                .do_update()
+                                .set(&models::UpdateUser {
+                                    oauth_token: &schema_user.oauth_token,
+                                    email: &schema_user.email,
+                                })
                                 .execute(&conn)
                             {
                                 // The operation was completed successfully, 200
@@ -137,8 +150,12 @@ pub async fn callback(
                                     session
                                         .set::<String>("token", access_token.secret().to_owned())?;
 
-                                    // Respond with a 201
-                                    Ok(HttpResponse::Created().finish())
+                                    // Respond with the user's details
+                                    Ok(Json(models::OwnedUser {
+                                        oauth_id: schema_user.oauth_id.to_owned(),
+                                        oauth_token: access_token.secret().to_owned(),
+                                        email: schema_user.email.to_owned(),
+                                    }))
                                 }
 
                                 // Since an error was thrown, return a 300
@@ -156,7 +173,7 @@ pub async fn callback(
             }
         } else {
             // Return a 500 error, since we can't continue with out a pkce verifier
-            Ok(HttpResponse::InternalServerError().finish())
+            Err(error::ErrorInternalServerError("No PKCE challenge verifier exists."))
         }
     }
 }

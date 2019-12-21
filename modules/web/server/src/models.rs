@@ -19,17 +19,40 @@ pub struct User {
     pub id: i32,
 }
 
+/// An owned representation of the user struct. Usually used in server responses.
+#[derive(Serialize)]
+pub struct OwnedUser {
+    /// The unique ID issued by the user's oauth provider (i.e. Google or GitHub)
+    pub oauth_id: i32,
+
+    /// The raw oauth token of the user
+    pub oauth_token: String,
+
+    /// The user's email
+    pub email: String,
+}
+
 #[derive(Insertable)]
 #[table_name = "users"]
-pub struct NewUser {
+pub struct NewUser<'a> {
     /// The user's oauth identifier
     pub oauth_id: i32,
 
     /// The user's current oauth access token hash
-    pub oauth_token: String,
+    pub oauth_token: &'a str,
 
     /// The email of the new user
-    pub email: String,
+    pub email: &'a str,
+}
+
+#[derive(AsChangeset)]
+#[table_name = "users"]
+pub struct UpdateUser<'a> {
+    /// The update oauth access token hash of the user
+    pub oauth_token: &'a str,
+
+    /// The updated email of the user
+    pub email: &'a str,
 }
 
 #[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
