@@ -1,4 +1,5 @@
 use super::{oauth, users};
+use actix_cors::Cors;
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
 use diesel::{
@@ -137,15 +138,18 @@ impl Server {
                     App::new()
                         .wrap(Logger::default())
                         .wrap(CookieSession::private(&encryption_key).secure(false)) // Use secure session storage to store state vars, pkce challenges
+                        .wrap(Cors::new().allowed_origin("*").finish()) // TODO: Better CORS policy?
                         .data(pool.clone()) // Allow usage of the db connector from API routes
                         .data(cfg.clone()) // Allow access to the oauth configuration from request handlers
                         .service(oauth::authenticate) // Register the authentication oauth service
                         .service(oauth::callback) // Register the oauth callback service
                         .service(users::all_user_ids) // Register the all users service
                         .service(users::user_with_id) // Register the GET service for a particular user
+                        .service(users::user) // Register the GET service for a user matching a bearer token
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
-                .start().await
+                .start()
+                .await
             }
 
             // Log an error
