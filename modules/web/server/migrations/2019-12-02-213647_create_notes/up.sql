@@ -33,8 +33,11 @@ CREATE TABLE notes (
     -- The hash of the post's name and author
     id SERIAL PRIMARY KEY,
 
-    -- The ID of the board's owner
+    -- The ID of the post's owner
     user_id INTEGER NOT NULL,
+
+    -- The ID of the post's parent board
+    board_id INTEGER NOT NULL,
 
     -- The title of the post
     title TEXT NOT NULL,
