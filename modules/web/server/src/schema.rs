@@ -12,6 +12,7 @@ table! {
     notes (id) {
         id -> Int4,
         user_id -> Int4,
+        board_id -> Int4,
         title -> Text,
         body -> Text,
     }

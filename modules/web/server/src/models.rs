@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Insertable, Identifiable, Queryable, PartialEq, Debug)]
-#[primary_key(email)]
+#[primary_key(oauth_id)]
 #[table_name = "users"]
 pub struct User {
     /// The user's oauth ID provided by google or GitHub
@@ -60,7 +60,7 @@ pub struct UpdateUser<'a> {
 #[table_name = "boards"]
 pub struct Board {
     /// The hash of the board's title and owner
-    pub id: String,
+    pub id: i32,
 
     /// The ID of the user that the board is owned by
     pub user_id: i32,
@@ -77,13 +77,17 @@ pub struct Board {
 
 #[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
 #[belongs_to(User)]
+#[belongs_to(Board)]
 #[table_name = "notes"]
 pub struct Note {
     /// The hash of the note's name and author
-    pub id: String,
+    pub id: i32,
 
     /// The ID of the user that the note is owned by
     pub user_id: i32,
+
+    /// The ID of the board that the note is owned by
+    pub board_id: i32,
 
     /// The title of the note
     pub title: String,
