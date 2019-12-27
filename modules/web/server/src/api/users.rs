@@ -1,4 +1,7 @@
-use super::super::{models::User, schema::users::dsl::*};
+use super::super::{
+    models::{Board, Note, User},
+    schema::{self, users::dsl::*},
+};
 use actix_web::{
     error,
     web::{Data, HttpRequest, Json, Path},
@@ -7,7 +10,7 @@ use actix_web::{
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
-    ExpressionMethods, QueryDsl, RunQueryDsl,
+    BelongingToDsl, ExpressionMethods, QueryDsl, RunQueryDsl,
 };
 use sha3::{Digest, Sha3_256};
 
@@ -36,11 +39,11 @@ impl<E: std::error::Error + 'static> From<E> for Error {
 /// # Arguments
 ///
 /// * `req` - The user's request
-fn extract_bearer<'a>(req: &'a HttpRequest) -> Result<&'a str, Error> {
+fn extract_bearer(req: &HttpRequest) -> Result<&'_ str, Error> {
     // First, check that the key even exists in the request's headers
     if let Some(bearer_token) = req.headers().get("Authorization") {
         // Remove the "Bearer " prefix from the header value
-        if let Some(split_token) = bearer_token.to_str()?.split(" ").last() {
+        if let Some(split_token) = bearer_token.to_str()?.split(' ').last() {
             Ok(split_token) // Return the token as a string
         } else {
             // The token value doesn't exist, so just return an empty string
@@ -92,6 +95,90 @@ pub async fn user(
             .filter(oauth_token.eq(hash_token(token)))
             .first(&conn)?,
     ))
+}
+
+/// Gets a list of boards belonging to a user with the given ID.
+///
+/// # Arguments
+///
+/// * `pool` -The connection pool that will be used to connect to the postgres database
+/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
+/// integer
+/// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
+/// token (required) of the user
+#[get("/api/users/{user_id}/boards")]
+pub async fn boards_from_user_with_id(
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+    user_id: Path<i32>,
+    req: HttpRequest,
+) -> Result<Json<Vec<i32>>, Error> {
+    // Get a connection from the provided connection pool, so we can start using diesel.
+    let conn = pool.get()?;
+
+    // Get an authorization token from the headers sent with the request
+    let token = extract_bearer(&req)?;
+
+    // Get a user from the database with the same ID as was provided by the client
+    let u = users.find(*user_id).first::<User>(&conn)?;
+
+    // Check that the provided access token matches the one on file
+    if u.oauth_token == hash_token(token) {
+        // Get the ID of each board, and return a vector of these IDs
+        Ok(Json(
+            Board::belonging_to(&u)
+                .select(schema::boards::id)
+                .load::<i32>(&conn)?,
+        ))
+    } else {
+        // The codes don't match, communicate this discrepancy through
+        // a 300 (unauth) error
+        Err(Error(error::ErrorUnauthorized(
+            "The provided access code does not match the recorded token.",
+        )))
+    }
+}
+
+/// Gets a list of notes belonging to a user with the given ID.
+///
+/// # Arguments
+///
+/// * `pool` -The connection pool that will be used to connect to the postgres database
+/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
+/// integer
+/// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
+/// token (required) of the user
+#[get("/api/users/{user_id}/notes")]
+pub async fn notes_from_user_with_id(
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+    user_id: Path<i32>,
+    req: HttpRequest,
+) -> Result<Json<Vec<i32>>, Error> {
+    // Get a connection from the provided connection pool, so we can start using diesel.
+    let conn = pool.get()?;
+
+    // Get an authorization token from the headers sent with the request
+    let token = extract_bearer(&req)?;
+
+    // Get a user from the database with the same ID as was provided by the client
+    let u = users.find(*user_id).first::<User>(&conn)?;
+
+    // Check that the provided access token matches the one on file
+    if u.oauth_token == hash_token(token) {
+        // Get the ID of each note, and return a vector of these IDs
+        Ok(Json(
+            Note::belonging_to(&u)
+                .select(schema::notes::id)
+                .load::<i32>(&conn)?,
+        ))
+    } else {
+        // The codes don't match, communicate this discrepancy through
+        // a 300 (unauth) error
+        Err(Error(error::ErrorUnauthorized(
+            "The provided access code does not match the recorded token.",
+        )))
+    }
 }
 
 /// Gets the user with given oauth token and ID from the database.

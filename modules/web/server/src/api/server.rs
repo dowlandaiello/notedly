@@ -146,6 +146,8 @@ impl Server {
                         .service(users::all_user_ids) // Register the all users service
                         .service(users::user_with_id) // Register the GET service for a particular user
                         .service(users::user) // Register the GET service for a user matching a bearer token
+                        .service(users::boards_from_user_with_id) // Register the GET service for a user's boards (IDs only)
+                        .service(users::notes_from_user_with_id) // The same GET, but for notes
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .start()
