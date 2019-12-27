@@ -39,7 +39,7 @@ impl<E: std::error::Error + 'static> From<E> for Error {
 /// # Arguments
 ///
 /// * `req` - The user's request
-fn extract_bearer(req: &HttpRequest) -> Result<&'_ str, Error> {
+pub(crate) fn extract_bearer(req: &HttpRequest) -> Result<&'_ str, Error> {
     // First, check that the key even exists in the request's headers
     if let Some(bearer_token) = req.headers().get("Authorization") {
         // Remove the "Bearer " prefix from the header value
@@ -62,7 +62,7 @@ fn extract_bearer(req: &HttpRequest) -> Result<&'_ str, Error> {
 /// # Arguments
 ///
 /// * `token` - The token to be hashed
-fn hash_token(token: &str) -> String {
+pub(crate) fn hash_token(token: &str) -> String {
     // Make a new hasher for the token
     let mut token_hasher = Sha3_256::new();
     token_hasher.input(token);

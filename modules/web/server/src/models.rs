@@ -1,6 +1,5 @@
-use super::schema::{boards, notes, users};
+use super::schema::{boards, notes, users, permissions};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Insertable, Identifiable, Queryable, PartialEq, Debug)]
 #[primary_key(oauth_id)]
@@ -70,9 +69,6 @@ pub struct Board {
 
     /// The privacy setting of the board (0 => private, 1 => public [accessable by link])
     pub visibility: i16,
-
-    /// The permissions of the board
-    pub permissions: Value,
 }
 
 #[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
@@ -94,4 +90,22 @@ pub struct Note {
 
     /// The text contained in the note
     pub body: String,
+}
+
+#[derive(Identifiable, Queryable, Associations, PartialEq, Debug)]
+#[belongs_to(Board)]
+#[primary_key(user_id)]
+#[table_name = "permissions"]
+pub struct Permission {
+    /// The ID of the user associated with the permission
+    pub user_id: i32,
+
+    /// The ID of the board associated with the permission
+    pub board_id: i32,
+
+    /// Whether or not the user can read from this board
+    pub read: bool,
+
+    /// Whether or not the user can write to this board
+    pub write: bool,
 }

@@ -23,10 +23,7 @@ CREATE TABLE boards (
     title TEXT NOT NULL,
 
     -- The privacy setting of the board (0 => private, 1 => unlisted, 2 => permissive)
-    visibility SMALLINT NOT NULL,
-
-    -- The permissions of the board, per each user
-    permissions JSONB NOT NULL
+    visibility SMALLINT NOT NULL
 );
 
 CREATE TABLE notes (
@@ -44,4 +41,18 @@ CREATE TABLE notes (
 
     -- The text contained in the post
     body TEXT NOT NULL
+);
+
+CREATE TABLE permissions (
+    -- The ID of the associated user targeted by the permission
+    user_id INTEGER NOT NULL PRIMARY KEY,
+
+    -- The ID of the parent board / post (n)
+    board_id INTEGER NOT NULL,   
+
+    -- Can the user read the posts on the board?
+    read BOOLEAN NOT NULL,
+
+    -- Can the user write new posts to the board?
+    write BOOLEAN NOT NULL
 );

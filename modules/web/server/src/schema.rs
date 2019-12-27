@@ -4,7 +4,6 @@ table! {
         user_id -> Int4,
         title -> Text,
         visibility -> Int2,
-        permissions -> Jsonb,
     }
 }
 
@@ -15,6 +14,15 @@ table! {
         board_id -> Int4,
         title -> Text,
         body -> Text,
+    }
+}
+
+table! {
+    permissions (user_id) {
+        user_id -> Int4,
+        board_id -> Int4,
+        read -> Bool,
+        write -> Bool,
     }
 }
 
@@ -30,5 +38,6 @@ table! {
 allow_tables_to_appear_in_same_query!(
     boards,
     notes,
+    permissions,
     users,
 );

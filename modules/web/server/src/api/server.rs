@@ -1,4 +1,4 @@
-use super::{oauth, users};
+use super::{oauth, users, boards};
 use actix_cors::Cors;
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
@@ -148,6 +148,7 @@ impl Server {
                         .service(users::user) // Register the GET service for a user matching a bearer token
                         .service(users::boards_from_user_with_id) // Register the GET service for a user's boards (IDs only)
                         .service(users::notes_from_user_with_id) // The same GET, but for notes
+                        .service(boards::viewable_boards) // Register the GET service for a user's viewable boards
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .start()
