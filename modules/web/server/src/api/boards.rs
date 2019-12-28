@@ -193,7 +193,7 @@ pub async fn update_specific_board(
     };
 
     // Merge the old and new boards
-    let merged_boards: Board = update_to_board.to_new_board(board_entry);
+    let merged_boards: Board = update_to_board.new_board(board_entry);
 
     // Update the board in the table
     Ok(Json(update(boards).set(&merged_boards).get_result(&conn)?))

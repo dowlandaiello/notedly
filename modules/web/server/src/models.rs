@@ -101,7 +101,7 @@ pub struct UpdateBoard {
 impl UpdateBoard {
     /// Consumes the request to update the given board, and returns a new board given potentially
     /// empty fields in the current request to update & an old, completed request.
-    pub fn to_new_board(&mut self, old: Board) -> Board {
+    pub fn new_board(&mut self, old: Board) -> Board {
         // Use fields from the new instance if they exist, but fall back to the old instance if
         // they don't
         Board {
