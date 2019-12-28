@@ -7,10 +7,10 @@ use super::{
 };
 use actix_web::{
     error,
-    web::{Data, HttpRequest, Json, Path},
+    web::{Data, HttpRequest, Json, Path, HttpResponse},
 };
 use diesel::{
-    dsl::{exists, update},
+    dsl::{exists, update, delete},
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
     BelongingToDsl, BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl,
@@ -162,6 +162,7 @@ pub async fn specific_board(
 /// Updates a specific board by its ID.
 ///
 /// # Arguments
+///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `board_uid` - The ID of the requested board
 /// * `new_board` - A JSON request detailing how to update the board
@@ -180,7 +181,7 @@ pub async fn update_specific_board(
     // Get an authorization token from the headers sent with the request
     let token = extract_bearer(&req)?;
 
-    // Look at the request path, extract the board ID, and find the matching board in the database.
+    // Look at the request path, extract the board ID, and find the matching board in the database
     let board_entry: Board = boards.find(*board_uid).first(&conn)?;
 
     // Get the owner of the matching board
@@ -197,4 +198,37 @@ pub async fn update_specific_board(
 
     // Update the board in the table
     Ok(Json(update(boards).set(&merged_boards).get_result(&conn)?))
+}
+
+/// Deletes a board with the given ID.
+///
+/// # Arguments
+///
+/// * `pool` - The connection pool that will be used to connect to the postgres database
+#[delete("/api/boards/{board_id}")]
+pub async fn delete_specific_board(
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+    board_uid: Path<i32>,
+    req: HttpRequest,
+) -> Result<HttpResponse, Error> {
+    // Get a connection from the provided connection pool, so we can start using diesel
+    let conn = pool.get()?;
+
+    // Get an authorization token from the headers sent with the request
+    let token = extract_bearer(&req)?;
+
+    // Get the owner of the board that the user wants to delete
+    let owner: User = users.find(boards.find(*board_uid).select(schema::boards::user_id).first::<i32>(&conn)?).first(&conn)?;
+
+    // Ensure that the user is the owner of the board
+    if owner.oauth_token != hash_token(token) {
+        // Return an authorization error
+        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to edit this board.")));
+    };
+
+    // Delete the board
+    delete(boards.find(*board_uid)).execute(&conn)?;
+
+    // Update the board in the table
+    Ok(HttpResponse::Ok().finish())
 }

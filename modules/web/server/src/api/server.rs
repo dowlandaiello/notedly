@@ -152,6 +152,7 @@ impl Server {
                         .service(boards::specific_board) // Register the GET service for a specific board (only viewable given certain permissions)
                         .service(boards::new_board) // Register the POST service for a new board
                         .service(boards::update_specific_board) // Register the PATCH service for a specific board
+                        .service(boards::delete_specific_board) // Reigster the DELETE service for a specific board
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .start()
