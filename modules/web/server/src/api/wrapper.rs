@@ -1,4 +1,4 @@
-use actix_web::{client::Client, Error, error};
+use actix_web::{client::Client, error, Error};
 use serde::{Deserialize, Serialize};
 use std::{default::Default, io};
 

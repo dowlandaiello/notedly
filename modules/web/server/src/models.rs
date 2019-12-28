@@ -1,4 +1,4 @@
-use super::schema::{boards, notes, users, permissions};
+use super::schema::{boards, notes, permissions, users};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Insertable, Identifiable, Queryable, PartialEq, Debug)]
@@ -54,7 +54,9 @@ pub struct UpdateUser<'a> {
     pub email: &'a str,
 }
 
-#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
+#[derive(
+    Serialize, Deserialize, Identifiable, Queryable, Associations, AsChangeset, PartialEq, Debug,
+)]
 #[belongs_to(User)]
 #[table_name = "boards"]
 pub struct Board {
@@ -69,6 +71,58 @@ pub struct Board {
 
     /// The privacy setting of the board (0 => private, 1 => public [accessable by link])
     pub visibility: i16,
+}
+
+#[derive(Serialize, Deserialize, Insertable, AsChangeset)]
+#[table_name = "boards"]
+pub struct NewBoard {
+    /// The ID of the user that the board is owned by
+    pub user_id: i32,
+
+    /// The title of the board
+    pub title: String,
+
+    /// The privacy setting of the board (0 => private, 1 => public [accessable by link])
+    pub visibility: i16,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateBoard {
+    /// The ID of the user that the board is owned by
+    pub user_id: Option<i32>,
+
+    /// The title of the board
+    pub title: Option<String>,
+
+    /// The privacy setting of the board (0 => private, 1 => public [accessable by link])
+    pub visibility: Option<i16>,
+}
+
+impl UpdateBoard {
+    /// Consumes the request to update the given board, and returns a new board given potentially
+    /// empty fields in the current request to update & an old, completed request.
+    pub fn to_new_board(&mut self, old: Board) -> Board {
+        // Use fields from the new instance if they exist, but fall back to the old instance if
+        // they don't
+        Board {
+            id: old.id,
+            user_id: if let Some(usr_id) = self.user_id.take() {
+                usr_id
+            } else {
+                old.user_id
+            },
+            title: if let Some(title) = self.title.take() {
+                title
+            } else {
+                old.title
+            },
+            visibility: if let Some(vis) = self.visibility.take() {
+                vis
+            } else {
+                old.visibility
+            },
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
@@ -92,7 +146,10 @@ pub struct Note {
     pub body: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Debug)]
+#[derive(
+    Serialize, Deserialize, Identifiable, Insertable, Queryable, Associations, PartialEq, Debug,
+)]
+#[belongs_to(User)]
 #[belongs_to(Board)]
 #[primary_key(user_id)]
 #[table_name = "permissions"]

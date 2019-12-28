@@ -1,5 +1,5 @@
+pub mod boards;
 pub mod oauth;
 pub mod server;
-pub mod wrapper;
 pub mod users;
-pub mod boards;
+pub mod wrapper;

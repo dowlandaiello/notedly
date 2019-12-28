@@ -1,4 +1,4 @@
-use super::{oauth, users, boards};
+use super::{boards, oauth, users};
 use actix_cors::Cors;
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
@@ -149,6 +149,9 @@ impl Server {
                         .service(users::boards_from_user_with_id) // Register the GET service for a user's boards (IDs only)
                         .service(users::notes_from_user_with_id) // The same GET, but for notes
                         .service(boards::viewable_boards) // Register the GET service for a user's viewable boards
+                        .service(boards::specific_board) // Register the GET service for a specific board (only viewable given certain permissions)
+                        .service(boards::new_board) // Register the POST service for a new board
+                        .service(boards::update_specific_board) // Register the PATCH service for a specific board
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .start()

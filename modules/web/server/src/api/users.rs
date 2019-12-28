@@ -15,7 +15,7 @@ use diesel::{
 use sha3::{Digest, Sha3_256};
 
 /// Represents an extended actix webserver error.
-pub struct Error(ActixError);
+pub struct Error(pub ActixError);
 
 impl Into<ActixError> for Error {
     /// Converts the general notedly error into an Actix error.

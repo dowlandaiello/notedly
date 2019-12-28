@@ -6,7 +6,7 @@ use super::{
 use actix_session::Session;
 use actix_web::{
     error, http,
-    web::{Data, Path, Query, Json},
+    web::{Data, Json, Path, Query},
     Error, HttpResponse,
 };
 use diesel::{
@@ -89,7 +89,9 @@ pub async fn callback(
             .unwrap_or_else(|| "".to_owned())
     {
         // Respond with a 409
-        Err(error::ErrorConflict("The state challenge was not completed successfully."))
+        Err(error::ErrorConflict(
+            "The state challenge was not completed successfully.",
+        ))
     } else {
         let client = match session
             .get::<String>("provider")?
@@ -173,7 +175,9 @@ pub async fn callback(
             }
         } else {
             // Return a 500 error, since we can't continue with out a pkce verifier
-            Err(error::ErrorInternalServerError("No PKCE challenge verifier exists."))
+            Err(error::ErrorInternalServerError(
+                "No PKCE challenge verifier exists.",
+            ))
         }
     }
 }
