@@ -1,6 +1,6 @@
 use super::{
     super::{
-        models::{Board, NewBoard, NewPermission, Permission, UpdateBoard, User},
+        models::{Board, NewBoard, NewPermission, Note, Permission, UpdateBoard, User},
         schema::{self, boards::dsl::*, permissions::dsl::*, users::dsl::*},
     },
     users::{extract_bearer, hash_token, Error},
@@ -249,6 +249,7 @@ pub async fn delete_specific_board(
 /// Gets a list of permissions for the board.
 ///
 /// # Arguments
+///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
@@ -280,5 +281,45 @@ pub async fn all_permissions(
     // Return each of the permissions belonging to the board
     Ok(Json(
         Permission::belonging_to(&matching_board).get_results(&conn)?,
+    ))
+}
+
+/// Gets a list of notes belonging to the board.
+///
+/// # Arguments
+///
+/// * `pool` - The connection pool that will be used to connect to the postgres database
+/// * `board_uid` - The ID of the requested board
+/// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
+/// token (required) of the user
+#[get("/api/boards/{board_id}/notes")]
+pub async fn all_notes(
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+    board_uid: Path<i32>,
+    req: HttpRequest,
+) -> Result<Json<Vec<i32>>, Error> {
+    // Get a connection from the provided connection pool, so we can start using dieisel
+    let conn = pool.get()?;
+
+    // Get an authorization token from the headers sent with the request
+    let token = extract_bearer(&req)?;
+
+    // Look at the request path, extract the board ID, and find the matching board.
+    let matching_board: Board = boards.find(*board_uid).first(&conn)?;
+
+    // Get the owner of the board that the user wants to delete
+    let owner: User = users.find(matching_board.user_id).first(&conn)?;
+
+    // Ensure that the user is the owner of the board
+    if owner.oauth_token != hash_token(token) {
+        // Return an authorization error
+        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to edit this board.")));
+    };
+
+    // Return each of the notes belonging to the board (just their IDs)
+    Ok(Json(
+        Note::belonging_to(&matching_board)
+            .select(schema::notes::id)
+            .get_results(&conn)?,
     ))
 }
