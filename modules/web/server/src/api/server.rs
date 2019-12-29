@@ -148,11 +148,14 @@ impl Server {
                         .service(users::user) // Register the GET service for a user matching a bearer token
                         .service(users::boards_from_user_with_id) // Register the GET service for a user's boards (IDs only)
                         .service(users::notes_from_user_with_id) // The same GET, but for notes
-                        .service(boards::viewable_boards) // Register the GET service for a user's viewable boards
+                        .service(users::permissions_for_user_with_id) // Register the GET service all of a user's assignments
+                        .service(users::permission_for_user_with_board) // Register the GET service for a specific assignmen
+                        .service(boards::viewable_boards) // Register the GET service for all viewable boards (user has perms to see)
                         .service(boards::specific_board) // Register the GET service for a specific board (only viewable given certain permissions)
                         .service(boards::new_board) // Register the POST service for a new board
                         .service(boards::update_specific_board) // Register the PATCH service for a specific board
                         .service(boards::delete_specific_board) // Reigster the DELETE service for a specific board
+                        .service(boards::all_permissions) // Register the GET service for a specific board's permissions
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .start()

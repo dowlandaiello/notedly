@@ -1,5 +1,5 @@
 use super::super::{
-    models::{Board, Note, User},
+    models::{Board, Note, Permission, User},
     schema::{self, users::dsl::*},
 };
 use actix_web::{
@@ -10,7 +10,7 @@ use actix_web::{
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
-    BelongingToDsl, ExpressionMethods, QueryDsl, RunQueryDsl,
+    BelongingToDsl, BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl,
 };
 use sha3::{Digest, Sha3_256};
 
@@ -101,7 +101,7 @@ pub async fn user(
 ///
 /// # Arguments
 ///
-/// * `pool` -The connection pool that will be used to connect to the postgres database
+/// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
@@ -143,7 +143,7 @@ pub async fn boards_from_user_with_id(
 ///
 /// # Arguments
 ///
-/// * `pool` -The connection pool that will be used to connect to the postgres database
+/// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
@@ -177,6 +177,88 @@ pub async fn notes_from_user_with_id(
         // a 300 (unauth) error
         Err(Error(error::ErrorUnauthorized(
             "The provided access code does not match the recorded token.",
+        )))
+    }
+}
+
+/// Gets a list of permissions assigned to a user with the given ID.
+///
+/// # Arguments
+///
+/// * `pool` - The connection pool that will be used to connect to the postgres database
+/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
+/// integer
+/// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
+/// token (required) of the user
+#[get("/api/users/{user_id}/assignments")]
+pub async fn permissions_for_user_with_id(
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+    user_id: Path<i32>,
+    req: HttpRequest,
+) -> Result<Json<Vec<Permission>>, Error> {
+    // Get a connection from the provided connection pool, so we can start using diesel
+    let conn = pool.get()?;
+
+    // Get an authorization token from the headers sent with the request
+    let token = extract_bearer(&req)?;
+
+    // Get a user from the database with the same ID as was provided by the client
+    let u = users.find(*user_id).first::<User>(&conn)?;
+
+    // Check that the provided access token matches the one on file
+    if u.oauth_token == hash_token(token) {
+        Ok(Json(Permission::belonging_to(&u).get_results(&conn)?))
+    } else {
+        // The codes don't match, communicate this discrepancy through
+        // a 300 (unauth) error
+        Err(Error(error::ErrorUnauthorized(
+            "The provided access code does not match the recoded token.",
+        )))
+    }
+}
+
+/// Gets a specific permission.
+///
+/// # Arguments
+///
+/// * `pool` - The connection pool that will be used to connect to the postgres database
+/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
+/// integer
+/// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
+/// token (required) of the user
+#[get("/api/users/{user_id}/assignments/{board_id}")]
+pub async fn permission_for_user_with_board(
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+    context: Path<(i32, i32)>,
+    req: HttpRequest,
+) -> Result<Json<Permission>, Error> {
+    // Get a connection from the provided connection pool, so we can start using diesel
+    let conn = pool.get()?;
+
+    // Get an authorization token from the headers sent with the request
+    let token = extract_bearer(&req)?;
+
+    // Get a user from the database with the same ID as was provided by the client
+    let u = users.find(context.0).first::<User>(&conn)?;
+
+    // Check that the provided access token matches the one on file
+    if u.oauth_token == hash_token(token) {
+        Ok(Json(
+            schema::permissions::dsl::permissions
+                .filter(
+                    schema::permissions::board_id
+                        .eq(context.1)
+                        .and(schema::permissions::user_id.eq(u.oauth_id)),
+                )
+                .first(&conn)?,
+        ))
+    } else {
+        // The codes don't match, communicate this discrepancy through
+        // a 300 (unauth) error
+        Err(Error(error::ErrorUnauthorized(
+            "The provided access code does not match the recoded token.",
         )))
     }
 }
