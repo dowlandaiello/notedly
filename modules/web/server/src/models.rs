@@ -154,6 +154,9 @@ pub struct Note {
 #[primary_key(user_id)]
 #[table_name = "permissions"]
 pub struct Permission {
+    /// The ID of the permission
+    pub id: i32,
+
     /// The ID of the user associated with the permission
     pub user_id: i32,
 
@@ -164,5 +167,21 @@ pub struct Permission {
     pub read: bool,
 
     /// Whether or not the user can write to this board
+    pub write: bool,
+}
+
+#[derive(Serialize, Deserialize, Insertable)]
+#[table_name = "permissions"]
+pub struct NewPermission {
+    /// The ID of the user associated with the permission
+    pub user_id: i32,
+
+    /// The ID of the board associated with the permission
+    pub board_id: i32,
+
+    /// Whether or not the user can read from the board
+    pub read: bool,
+
+    /// Whether or not the user can write to the board
     pub write: bool,
 }
