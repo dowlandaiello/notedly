@@ -44,8 +44,11 @@ CREATE TABLE notes (
 );
 
 CREATE TABLE permissions (
+    -- THe ID of the permission
+    id SERIAL PRIMARY KEY,
+
     -- The ID of the associated user targeted by the permission
-    user_id INTEGER NOT NULL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
 
     -- The ID of the parent board / post (n)
     board_id INTEGER NOT NULL,   
