@@ -18,7 +18,8 @@ table! {
 }
 
 table! {
-    permissions (user_id) {
+    permissions (id) {
+        id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
         read -> Bool,
@@ -35,4 +36,9 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(boards, notes, permissions, users,);
+allow_tables_to_appear_in_same_query!(
+    boards,
+    notes,
+    permissions,
+    users,
+);
