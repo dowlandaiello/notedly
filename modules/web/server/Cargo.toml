@@ -15,7 +15,7 @@ hex = "0.4.0"
 log = "0.4.8"
 env_logger = "0.7.1"
 diesel = { version = "1.0.0", features = ["postgres", "r2d2", "numeric", "serde_json"]  }
-actix-web = { version = "2.0.0-rc", features = ["default", "openssl"] }
+actix-web = { version = "2.0.0", features = ["default", "openssl"] }
 oauth2 = "3.0.0-alpha.6"
 dotenv = "0.15.0"
 r2d2 = "0.8.7"
