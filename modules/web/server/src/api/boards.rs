@@ -10,39 +10,56 @@ use actix_web::{
     web::{Data, HttpRequest, HttpResponse, Json, Path},
 };
 use diesel::{
-    dsl::{delete, exists, update},
+    dsl::{delete, exists, select, update},
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
     BelongingToDsl, BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl,
 };
 
+/// Ensures that the provided access token matches that of the provided user.
+pub(crate) fn continue_if_authenticated(user: &User, auth_token: &str) -> Result<(), Error> {
+    // Return Ok if the tokens match, otherwise unauth
+    if hash_token(auth_token) != user.oauth_token {
+        Err(Error(error::ErrorUnauthorized(
+            "The provided access token does not match the recorded token for this user.",
+        )))
+    } else {
+        Ok(())
+    }
+}
+
 /// Ensures that the user has the given permissions.
-fn has_permissions(
-    conn: PgConnection,
+pub(crate) fn continue_if_has_perms(
+    conn: &PgConnection,
     board_uid: i32,
-    user: User,
+    user: &User,
     owner: bool,
-    read: bool,
-    write: bool,
+    can_read: bool,
+    can_write: bool,
 ) -> Result<(), Error> {
     // Construct a query to get the board with ID from the db
     let b_query = boards.find(board_uid);
 
     // The board must exist for all to continue. Otherwise, throw a 404.
-    if !exists(b_query).get_result(&conn)? {
+    if !select(exists(b_query)).get_result(conn)? {
         // Return a 404
-        return Err(Error(error::ErrorNotFound()));
+        return Err(Error(error::ErrorNotFound(format!(
+            "No board with the id '{}' exists.",
+            board_uid
+        ))));
     }
 
     // Get the board that matches the given UID from the database
-    let matching_board = b_query.first(&conn)?;
+    let matching_board: Board = b_query.first(conn)?;
 
     // If the end-user wants to enforce that the token matches an owner, so be it
     if owner {
         // If the user is not registered as the owner, return an error.
-        if matching_boarduser_id != user.id {
+        if matching_board.user_id != user.id {
             // Respond with an unauth
-            return Err(Error(error::ErrorUnauthorized()));
+            return Err(Error(error::ErrorUnauthorized(
+                "The provided access token does not match a user with the required privileges.",
+            )));
         }
 
         // The user is authenticated
@@ -51,29 +68,29 @@ fn has_permissions(
 
     // Construct a query to get the permission belonging to the user with the board
     let p_query =
-        Permission::belonging_to(&user).filter(schema::permissions::board_id.eq(board_uid));
+        Permission::belonging_to(user).filter(schema::permissions::board_id.eq(board_uid));
 
     // If this permission doesn't exist, the user isn't even envited to the board
-    if !exists(p_query).get_result(&conn)? {
+    if !select(exists(p_query)).get_result(conn)? {
         // Return a 404
-        return Err(Error(error::ErrorNotFound()));
+        return Err(Error(error::ErrorNotFound("The provided access token does not match a user that has been invited to this board.")));
     }
 
     // Get the permission belonging to the user
-    let permission: Permission = Permission::belonging_to(&user)
+    let permission: Permission = Permission::belonging_to(user)
         .filter(schema::permissions::board_id.eq(board_uid))
-        .first(&conn)?;
+        .first(conn)?;
 
     // Ensure the user has the proper permissions to be able to write & read to the file
-    if write && !permission.write || write && !permissions.read {
+    if can_write && !permission.write || can_write && !permission.read {
         // Respond with an unauth
-        return Err(Error(error::ErrorUnauthorized()));
+        return Err(Error(error::ErrorUnauthorized("The provided access token does not match a user with the required privileges (write).")));
     }
 
     // Ensure that the user has the proper permissions to be able to read to the file
-    if read && !permissions.read {
+    if can_read && !permission.read {
         // Respond with an unauth
-        return Err(Error(error::ErrorUnauthorized()));
+        return Err(Error(error::ErrorUnauthorized("THe provided access token does not match a user with the required privileges (read).")));
     }
 
     // The user should only have gotten this far if each of the preconditions were met--meaning
@@ -143,14 +160,8 @@ pub async fn new_board(
     // Get a reference to the user mentioned in the request, so we can authenticate.
     let u: User = users.find(board.user_id).first(&conn)?;
 
-    // Ensure that no funky business is going on...
-    if u.oauth_token != hash_token(token) {
-        // Return an authorization error, since the user is not allowed to create a board with this
-        // username without having the proper credentials
-        return Err(Error(error::ErrorUnauthorized(
-            "The provided access token does not match the recorded authoring token hash.",
-        )));
-    }
+    // Ensure that the user is who they say they are
+    continue_if_authenticated(&u, token)?;
 
     // Put the board into the database, and save a reference to its associated JSON encoding
     let written_board: Board = diesel::insert_into(boards)
@@ -199,29 +210,11 @@ pub async fn specific_board(
     // Look at the request path, extract the board ID, and find the matching board.
     let matching_board: Board = boards.find(*board_uid).first(&conn)?;
 
-    // Get the permissions of the post corresponding to the user indicated by the bearer token
-    match Permission::belonging_to(&matching_board)
-        .filter(schema::permissions::user_id.eq(u.oauth_id))
-        .first::<Permission>(&conn)
-    {
-        // The permission exists in the DB!
-        Ok(perm) => {
-            // If the user can read or write, then we can return the board!
-            if perm.read || perm.write {
-                // Return the found board
-                Ok(Json(matching_board))
-            } else {
-                // Return an authorization error, since the user does not have the proper permissions to
-                // view this board
-                Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to view this board.")))
-            }
-        }
+    // Ensure the user is able to read from the board
+    continue_if_has_perms(&conn, *board_uid, &u, false, true, false)?;
 
-        Err(e) => {
-            // Return the error in the form of a 500 unauth
-            Err(Error(error::ErrorUnauthorized(e)))
-        }
-    }
+    // Return the found board
+    Ok(Json(matching_board))
 }
 
 /// Updates a specific board by its ID.
@@ -249,14 +242,13 @@ pub async fn update_specific_board(
     // Look at the request path, extract the board ID, and find the matching board in the database
     let board_entry: Board = boards.find(*board_uid).first(&conn)?;
 
-    // Get the owner of the matching board
-    let owner: User = users.find(board_entry.user_id).first(&conn)?;
+    // Get the matching user from the request so that we can authenticate
+    let matching_user: User = users
+        .filter(schema::users::oauth_token.eq(token))
+        .first(&conn)?;
 
-    // Ensure that the user is the owner of the board
-    if owner.oauth_token != hash_token(token) {
-        // Return an authorization error
-        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to edit this board.")));
-    };
+    // Ensure that the user is actually the owner of the board
+    continue_if_has_perms(&conn, *board_uid, &matching_user, true, false, false)?;
 
     // Merge the old and new boards
     let merged_boards: Board = update_to_board.new_board(board_entry);
@@ -285,21 +277,13 @@ pub async fn delete_specific_board(
     // Get an authorization token from the headers sent with the request
     let token = extract_bearer(&req)?;
 
-    // Get the owner of the board that the user wants to delete
-    let owner: User = users
-        .find(
-            boards
-                .find(*board_uid)
-                .select(schema::boards::user_id)
-                .first::<i32>(&conn)?,
-        )
+    // Get the user that was mentioned in the request
+    let matching_user: User = users
+        .filter(schema::users::oauth_token.eq(token))
         .first(&conn)?;
 
     // Ensure that the user is the owner of the board
-    if owner.oauth_token != hash_token(token) {
-        // Return an authorization error
-        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to edit this board.")));
-    };
+    continue_if_has_perms(&conn, *board_uid, &matching_user, true, false, false)?;
 
     // Delete the board
     delete(boards.find(*board_uid)).execute(&conn)?;
@@ -334,14 +318,13 @@ pub async fn all_permissions(
     // Look at the request path, extract the board ID, and find the matching board.
     let matching_board: Board = boards.find(*board_uid).first(&conn)?;
 
-    // Get the owner of the board that the user wants to delete
-    let owner: User = users.find(matching_board.user_id).first(&conn)?;
+    // Get the user making the request
+    let matching_user: User = users
+        .filter(schema::users::oauth_token.eq(hash_token(token)))
+        .first(&conn)?;
 
-    // Ensure that the user is the owner of the board
-    if owner.oauth_token != hash_token(token) {
-        // Return an authorization error
-        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to edit this board.")));
-    };
+    // Ensure that the requesting user is in fact a user that is able to view the board
+    continue_if_has_perms(&conn, *board_uid, &matching_user, false, true, false)?;
 
     // Return each of the permissions belonging to the board
     Ok(Json(
@@ -372,14 +355,13 @@ pub async fn all_notes(
     // Look at the request path, extract the board ID, and find the matching board.
     let matching_board: Board = boards.find(*board_uid).first(&conn)?;
 
-    // Get the owner of the board that the user wants to delete
-    let owner: User = users.find(matching_board.user_id).first(&conn)?;
+    // Get the user making the request
+    let matching_user: User = users
+        .filter(schema::users::oauth_token.eq(hash_token(token)))
+        .first(&conn)?;
 
-    // Ensure that the user is the owner of the board
-    if owner.oauth_token != hash_token(token) {
-        // Return an authorization error
-        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to edit this board.")));
-    };
+    // Ensure that the user is in fact the owner of the board
+    continue_if_has_perms(&conn, *board_uid, &matching_user, false, true, true)?;
 
     // Return each of the notes belonging to the board (just their IDs)
     Ok(Json(
@@ -416,14 +398,13 @@ pub async fn all_users(
         .filter(schema::users::oauth_token.eq(hash_token(token)))
         .first(&conn)?;
 
-    // Ensure that this user is capable of reading from this board
-    if !exists(
-        Permission::belonging_to(&matching_board).filter(
-            schema::permissions::user_id
-                .eq(matching_user.id)
-                .and(schema::permissions::read.eq(true)),
-        ),
-    ) {
-        return Err(Error(error::ErrorUnauthorized("The provided bearer token does not match a user with the required permissions to view this board.")));
-    }
+    // Ensure that the requesting user has access to the board (read, at least)
+    continue_if_has_perms(&conn, *board_uid, &matching_user, false, true, false)?;
+
+    // Return a list of invited users
+    Ok(Json(
+        Permission::belonging_to(&matching_board)
+            .select(schema::permissions::user_id)
+            .get_results(&conn)?,
+    ))
 }
