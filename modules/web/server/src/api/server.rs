@@ -1,4 +1,4 @@
-use super::{boards, oauth, users};
+use super::{boards, notes, oauth, users};
 use actix_cors::Cors;
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
@@ -158,6 +158,8 @@ impl Server {
                         .service(boards::all_permissions) // Register the GET service for a specific board's permissions
                         .service(boards::all_notes) // Register the GET service for all of the notes belonging to a specific board
                         .service(boards::all_users) // Register the GET service for all of the users belonging to a specific board
+                        .service(notes::specific_note) // Register the GET service for an individual note with a particular ID
+                        .service(notes::update_specific_note) // Register the PATCH sevice for an individual note with a particulr ID
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .run()

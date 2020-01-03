@@ -125,7 +125,9 @@ impl UpdateBoard {
     }
 }
 
-#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, PartialEq, Debug)]
+#[derive(
+    Serialize, Deserialize, Identifiable, Queryable, Associations, AsChangeset, PartialEq, Debug,
+)]
 #[belongs_to(User)]
 #[belongs_to(Board)]
 #[table_name = "notes"]
@@ -144,6 +146,61 @@ pub struct Note {
 
     /// The text contained in the note
     pub body: String,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateNote {
+    /// The ID of the user that the note is owned by
+    pub user_id: Option<i32>,
+
+    /// The ID of the board that the note is owned by
+    pub board_id: Option<i32>,
+
+    /// The title of the note
+    pub title: Option<String>,
+
+    /// The text contained in the note
+    pub body: Option<String>,
+}
+
+impl UpdateNote {
+    /// Initializes a new note from the provided old note, as well as a partially constructed
+    /// UpdateNote.
+    pub fn new_note(&mut self, old: Note) -> Note {
+        // Return the new note
+        Note {
+            // The ID of this note CANNOT change
+            id: old.id,
+
+            // Use the new user ID if it exists, fallback to the old one
+            user_id: if let Some(user_id) = self.user_id.take() {
+                user_id
+            } else {
+                old.user_id
+            },
+
+            // Use the new board ID if it exists, fallback to the old one
+            board_id: if let Some(board_id) = self.board_id.take() {
+                board_id
+            } else {
+                old.board_id
+            },
+
+            // Use the new title if it exists, fallback to the old one
+            title: if let Some(title) = self.title.take() {
+                title
+            } else {
+                old.title
+            },
+
+            // Use the new note body if it exists, fallback to the old one
+            body: if let Some(body) = self.body.take() {
+                body
+            } else {
+                old.body
+            },
+        }
+    }
 }
 
 #[derive(
