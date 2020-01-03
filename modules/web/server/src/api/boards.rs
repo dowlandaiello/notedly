@@ -379,6 +379,7 @@ pub async fn all_notes(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
+#[get("/api/boards/{board_id}/users")]
 pub async fn all_users(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
