@@ -73,7 +73,9 @@ pub(crate) fn continue_if_has_perms(
     // If this permission doesn't exist, the user isn't even envited to the board
     if !select(exists(p_query)).get_result(conn)? {
         // Return a 404
-        return Err(Error(error::ErrorNotFound("The provided access token does not match a user that has been invited to this board.")));
+        return Err(Error(error::ErrorNotFound(
+            "The provided access token does not match a user that has been invited to this board.",
+        )));
     }
 
     // Get the permission belonging to the user
@@ -82,15 +84,19 @@ pub(crate) fn continue_if_has_perms(
         .first(conn)?;
 
     // Ensure the user has the proper permissions to be able to write & read to the file
-    if can_write && !permission.write || can_write && !permission.read {
+    if !(permission.write && permission.read || !can_write) {
         // Respond with an unauth
-        return Err(Error(error::ErrorUnauthorized("The provided access token does not match a user with the required privileges (write).")));
+        return Err(Error(error::ErrorUnauthorized(
+            "The provided access token does not match a user with the required privileges (write).",
+        )));
     }
 
     // Ensure that the user has the proper permissions to be able to read to the file
     if can_read && !permission.read {
         // Respond with an unauth
-        return Err(Error(error::ErrorUnauthorized("THe provided access token does not match a user with the required privileges (read).")));
+        return Err(Error(error::ErrorUnauthorized(
+            "THe provided access token does not match a user with the required privileges (read).",
+        )));
     }
 
     // The user should only have gotten this far if each of the preconditions were met--meaning

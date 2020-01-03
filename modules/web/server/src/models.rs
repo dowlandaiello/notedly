@@ -148,6 +148,22 @@ pub struct Note {
     pub body: String,
 }
 
+#[derive(Serialize, Deserialize, Insertable)]
+#[table_name = "notes"]
+pub struct NewNote {
+    /// The ID of the user that the note is owned by
+    pub user_id: i32,
+
+    /// The ID of the board that the note is owned by
+    pub board_id: i32,
+
+    /// The title of the note
+    pub title: String,
+
+    /// The text contained in the note
+    pub body: String,
+}
+
 #[derive(Deserialize)]
 pub struct UpdateNote {
     /// The ID of the user that the note is owned by
