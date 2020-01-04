@@ -1,6 +1,6 @@
 use super::{
     super::{
-        models::{NewNote, Note, UpdateNote, User},
+        models::{NewNote, Note, Permission, UpdateNote, User},
         schema::{self, notes::dsl::*, users::dsl::*},
     },
     users::{extract_bearer, hash_token, Error},
@@ -10,10 +10,10 @@ use actix_web::{
     web::{Data, HttpRequest, Json, Path},
 };
 use diesel::{
-    dsl::update,
+    dsl::{exists, select, update},
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
-    ExpressionMethods, QueryDsl, RunQueryDsl,
+    BelongingToDsl, BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl,
 };
 
 /// Gets a specific note from the database.
@@ -42,8 +42,18 @@ pub async fn specific_note(
         .filter(schema::users::oauth_token.eq(hash_token(extract_bearer(&req)?)))
         .first(&conn)?;
 
-    // Ensure that the user is in fact the owner of the note
-    if matching_note.user_id != matching_user.id {
+    // Ensure that the user is in fact the owner of the note or has the proper permissions to view
+    // the board that the note is part of
+    if matching_note.user_id != matching_user.id
+        && !select(exists(
+            Permission::belonging_to(&matching_user).filter(
+                schema::permissions::board_id
+                    .eq(matching_note.board_id)
+                    .and(schema::permissions::read.eq(true)),
+            ),
+        ))
+        .get_result(&conn)?
+    {
         return Err(Error(error::ErrorUnauthorized("The provided access token does not match a user with sufficient privileges to read this note.")));
     }
 

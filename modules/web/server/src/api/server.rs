@@ -159,7 +159,8 @@ impl Server {
                         .service(boards::all_notes) // Register the GET service for all of the notes belonging to a specific board
                         .service(boards::all_users) // Register the GET service for all of the users belonging to a specific board
                         .service(notes::specific_note) // Register the GET service for an individual note with a particular ID
-                        .service(notes::update_specific_note) // Register the PATCH sevice for an individual note with a particulr ID
+                        .service(notes::update_specific_note) // Register the PATCH service for an individual note with a particular ID
+                        .service(notes::new_note) // Register the POST service for a new note
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .run()

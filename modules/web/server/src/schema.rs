@@ -28,11 +28,11 @@ table! {
 }
 
 table! {
-    users (oauth_id) {
+    users (id) {
+        id -> Int4,
         oauth_id -> Int4,
         oauth_token -> Text,
         email -> Text,
-        id -> Int4,
     }
 }
 

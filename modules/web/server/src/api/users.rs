@@ -89,11 +89,14 @@ pub async fn user(
     // Get an authorization token from the headers sent with the request
     let token = extract_bearer(&req)?;
 
-    // Get and return the matching user
+    // Get and return the matching user. If the user doesn't exist, 404
     Ok(Json(
-        users
-            .filter(oauth_token.eq(hash_token(token)))
-            .first(&conn)?,
+        match users.filter(oauth_token.eq(hash_token(token))).first(&conn) {
+            Ok(u) => Ok(u),
+            Err(_) => Err(Error(error::ErrorNotFound(format!(
+                "The requested user does not exist.",
+            )))),
+        }?,
     ))
 }
 
@@ -120,7 +123,13 @@ pub async fn boards_from_user_with_id(
     let token = extract_bearer(&req)?;
 
     // Get a user from the database with the same ID as was provided by the client
-    let u = users.find(*user_id).first::<User>(&conn)?;
+    let u = match users.find(*user_id).first::<User>(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested user (id: {}) does not exist.",
+            *user_id,
+        )))),
+    }?;
 
     // Check that the provided access token matches the one on file
     if u.oauth_token == hash_token(token) {
@@ -162,7 +171,13 @@ pub async fn notes_from_user_with_id(
     let token = extract_bearer(&req)?;
 
     // Get a user from the database with the same ID as was provided by the client
-    let u = users.find(*user_id).first::<User>(&conn)?;
+    let u = match users.find(*user_id).first::<User>(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested user (id: {}) does not exist.",
+            *user_id,
+        )))),
+    }?;
 
     // Check that the provided access token matches the one on file
     if u.oauth_token == hash_token(token) {
@@ -204,7 +219,13 @@ pub async fn permissions_for_user_with_id(
     let token = extract_bearer(&req)?;
 
     // Get a user from the database with the same ID as was provided by the client
-    let u = users.find(*user_id).first::<User>(&conn)?;
+    let u = match users.find(*user_id).first::<User>(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested user (id: {}) does not exist.",
+            *user_id
+        )))),
+    }?;
 
     // Check that the provided access token matches the one on file
     if u.oauth_token == hash_token(token) {
@@ -241,18 +262,27 @@ pub async fn permission_for_user_with_board(
     let token = extract_bearer(&req)?;
 
     // Get a user from the database with the same ID as was provided by the client
-    let u = users.find(context.0).first::<User>(&conn)?;
+    let u = match users.find(context.0).first::<User>(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested user (id: {}) does not exist.",
+            context.0,
+        )))),
+    }?;
 
     // Check that the provided access token matches the one on file
     if u.oauth_token == hash_token(token) {
         Ok(Json(
-            schema::permissions::dsl::permissions
+            match schema::permissions::dsl::permissions
                 .filter(
                     schema::permissions::board_id
                         .eq(context.1)
-                        .and(schema::permissions::user_id.eq(u.oauth_id)),
+                        .and(schema::permissions::user_id.eq(u.id)),
                 )
-                .first(&conn)?,
+                .first(&conn){
+                    Ok(perm) => Ok(perm),
+                    Err(_) => Err(Error(error::ErrorNotFound(format!("The requested assignment belonging to the requested board (id: {}) and user (id: {}) does not exist.", context.0, context.1))))
+                }?,
         ))
     } else {
         // The codes don't match, communicate this discrepancy through
@@ -286,7 +316,13 @@ pub async fn user_with_id(
     let token = extract_bearer(&req)?;
 
     // Get a user from the database with the same ID as was provided by the client
-    let u = users.find(*user_id).first::<User>(&conn)?;
+    let u = match users.find(*user_id).first::<User>(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested user (id: {}) does not exist.",
+            *user_id,
+        )))),
+    }?;
 
     // Check that the provided access token matches the one on file
     if u.oauth_token == hash_token(token) {
@@ -314,7 +350,7 @@ pub async fn all_user_ids(
         // We were able to connect to the database, get the requested data (all usernames)
         Ok(conn) => {
             // Get the ID of each user, and return an appropriate repsonse
-            match users.select(oauth_id).load::<i32>(&conn) {
+            match users.select(id).load::<i32>(&conn) {
                 // Respond with each of the user IDs
                 Ok(user_ids) => Ok(Json(user_ids)),
 

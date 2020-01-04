@@ -2,9 +2,12 @@ use super::schema::{boards, notes, permissions, users};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Insertable, Identifiable, Queryable, PartialEq, Debug)]
-#[primary_key(oauth_id)]
 #[table_name = "users"]
+#[primary_key(id)]
 pub struct User {
+    /// The user's unique identifier
+    pub id: i32,
+
     /// The user's oauth ID provided by google or GitHub
     pub oauth_id: i32,
 
@@ -13,9 +16,6 @@ pub struct User {
 
     /// The email of the user
     pub email: String,
-
-    /// The user's unique identifier
-    pub id: i32,
 }
 
 /// An owned representation of the user struct. Usually used in server responses.

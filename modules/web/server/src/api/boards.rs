@@ -123,18 +123,21 @@ pub async fn viewable_boards(
     let token = extract_bearer(&req)?;
 
     // Get the currently authenticated user
-    let u: User = users
-        .filter(oauth_token.eq(hash_token(token)))
-        .first(&conn)?;
+    let u: User = match users.filter(oauth_token.eq(hash_token(token))).first(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(
+            "The requested user does not exist.",
+        ))),
+    }?;
 
     // Get and return any of the boards belonging to the user (includes shared boards)
     Ok(Json(
         boards
             .filter(
-                schema::boards::user_id.eq(u.oauth_id).or(exists(
+                schema::boards::user_id.eq(u.id).or(exists(
                     permissions.filter(
                         schema::permissions::user_id
-                            .eq(u.oauth_id)
+                            .eq(u.id)
                             .and(schema::permissions::board_id.eq(schema::boards::id)),
                     ),
                 )),
@@ -164,7 +167,13 @@ pub async fn new_board(
     let token = extract_bearer(&req)?;
 
     // Get a reference to the user mentioned in the request, so we can authenticate.
-    let u: User = users.find(board.user_id).first(&conn)?;
+    let u: User = match users.find(board.user_id).first(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested user (id: {}) does not exist.",
+            board.user_id
+        )))),
+    }?;
 
     // Ensure that the user is who they say they are
     continue_if_authenticated(&u, token)?;
@@ -177,7 +186,7 @@ pub async fn new_board(
     // Put permissions for the owner of this board into the database
     diesel::insert_into(permissions)
         .values(&NewPermission {
-            user_id: u.oauth_id,
+            user_id: u.id,
             board_id: written_board.id,
             read: true,
             write: true,
@@ -208,19 +217,31 @@ pub async fn specific_board(
     // Get an authorization token from the headers sent with the request
     let token = extract_bearer(&req)?;
 
-    // Get the currently authenticated user
-    let u: User = users
-        .filter(oauth_token.eq(hash_token(token)))
-        .first(&conn)?;
+    // Get the requested user from the database, and return a 404 if it doesn't exist.
+    let u: User = match users.filter(oauth_token.eq(hash_token(token))).first(&conn) {
+        Ok(u) => Ok(u),
+        Err(_) => Err(Error(error::ErrorNotFound(
+            "The requested user does not exist.",
+        ))),
+    }?;
 
-    // Look at the request path, extract the board ID, and find the matching board.
-    let matching_board: Board = boards.find(*board_uid).first(&conn)?;
+    // Get the requested board from the database
+    match boards.find(*board_uid).first::<Board>(&conn) {
+        // The board exists, let's return it
+        Ok(board) => {
+            // Ensure the user is able to read from the board
+            continue_if_has_perms(&conn, *board_uid, &u, false, true, false)?;
 
-    // Ensure the user is able to read from the board
-    continue_if_has_perms(&conn, *board_uid, &u, false, true, false)?;
+            // Return the board
+            Ok(Json(board))
+        }
 
-    // Return the found board
-    Ok(Json(matching_board))
+        // The board does not exist, return a 404
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested board (id: {}) does not exist.",
+            *board_uid
+        )))),
+    }
 }
 
 /// Updates a specific board by its ID.
@@ -246,11 +267,17 @@ pub async fn update_specific_board(
     let token = extract_bearer(&req)?;
 
     // Look at the request path, extract the board ID, and find the matching board in the database
-    let board_entry: Board = boards.find(*board_uid).first(&conn)?;
+    let board_entry: Board = match boards.find(*board_uid).first(&conn) {
+        Ok(b) => Ok(b),
+        Err(_) => Err(Error(error::ErrorNotFound(format!(
+            "The requested board (id: {}) does not exist.",
+            *board_uid
+        )))),
+    }?;
 
     // Get the matching user from the request so that we can authenticate
     let matching_user: User = users
-        .filter(schema::users::oauth_token.eq(token))
+        .filter(schema::users::oauth_token.eq(hash_token(token)))
         .first(&conn)?;
 
     // Ensure that the user is actually the owner of the board

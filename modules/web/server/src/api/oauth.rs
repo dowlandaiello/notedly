@@ -128,9 +128,12 @@ pub async fn callback(
                                     .unwrap_or_else(|| "".to_owned()),
                             ); // Generate a new wrapper for the user API from the acess token and provider
 
+                            // Get the user's oauth ID
+                            let id_oauth = user.oauth_id().await?;
+
                             // Generate a user with an empty UID (postgres will figure this out)
                             let schema_user = models::NewUser {
-                                oauth_id: user.oauth_id().await?,
+                                oauth_id: id_oauth,
                                 oauth_token: &hex::encode(token_hasher.result()),
                                 email: user.email().await?,
                             };
@@ -154,7 +157,7 @@ pub async fn callback(
 
                                     // Respond with the user's details
                                     Ok(Json(models::OwnedUser {
-                                        oauth_id: schema_user.oauth_id.to_owned(),
+                                        oauth_id: id_oauth.to_owned(),
                                         oauth_token: access_token.secret().to_owned(),
                                         email: schema_user.email.to_owned(),
                                     }))
