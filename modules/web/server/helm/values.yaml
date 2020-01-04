@@ -18,7 +18,6 @@ serviceAccount:
 service:
   name: notedly
   type: LoadBalancer
-  ports:
-  - port: 80
+  servicePort: 80
   selector:
     app: helm
