@@ -1,15 +1,15 @@
 CREATE TABLE users (
+    -- The user's ID
+    id SERIAL PRIMARY KEY,
+
     -- The user's oauth identifier
-    oauth_id INTEGER PRIMARY KEY, 
+    oauth_id INTEGER NOT NULL UNIQUE,
 
     -- The user's current oauth access token hash
     oauth_token TEXT NOT NULL,
 
     -- The user's email
-    email TEXT NOT NULL,
-
-    -- The user's ID
-    id SERIAL
+    email TEXT NOT NULL
 );
 
 CREATE TABLE boards (
