@@ -13,3 +13,7 @@ This project simply serves as a demonstration of Rust's full-stack capabilities.
 * Tokio, Actix - futures executors
 * Bazel - monorepo submodules build manager
 * Oauth2-rs - GitHub & Google oauth client
+
+## API
+
+To get started with the Notedly API, grab an API token from the [Notedly GitHub authentication endpoint](https://notedly.app/api/oauth/login/github)
