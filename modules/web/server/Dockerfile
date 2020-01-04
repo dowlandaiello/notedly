@@ -2,7 +2,6 @@ FROM rust:1.40
 
 WORKDIR /usr/src/server
 
-COPY .env .
 COPY . .
 
 EXPOSE 80
