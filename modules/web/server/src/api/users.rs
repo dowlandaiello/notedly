@@ -78,7 +78,7 @@ pub(crate) fn hash_token(token: &str) -> String {
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `req` - An HTTP request provided by the caller of this method
-#[get("/api/user")]
+#[get("/user")]
 pub async fn user(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -105,12 +105,12 @@ pub async fn user(
 /// # Arguments
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
-/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// * `user_id` - A parameter contained in the path, as such: /users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/users/{user_id}/boards")]
+#[get("/users/{user_id}/boards")]
 pub async fn boards_from_user_with_id(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     user_id: Path<i32>,
@@ -153,12 +153,12 @@ pub async fn boards_from_user_with_id(
 /// # Arguments
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
-/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// * `user_id` - A parameter contained in the path, as such: /users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/users/{user_id}/notes")]
+#[get("/users/{user_id}/notes")]
 pub async fn notes_from_user_with_id(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     user_id: Path<i32>,
@@ -201,12 +201,12 @@ pub async fn notes_from_user_with_id(
 /// # Arguments
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
-/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// * `user_id` - A parameter contained in the path, as such: /users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/users/{user_id}/assignments")]
+#[get("/users/{user_id}/assignments")]
 pub async fn permissions_for_user_with_id(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     user_id: Path<i32>,
@@ -244,12 +244,12 @@ pub async fn permissions_for_user_with_id(
 /// # Arguments
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
-/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// * `user_id` - A parameter contained in the path, as such: /users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/users/{user_id}/assignments/{board_id}")]
+#[get("/users/{user_id}/assignments/{board_id}")]
 pub async fn permission_for_user_with_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     context: Path<(i32, i32)>,
@@ -298,12 +298,12 @@ pub async fn permission_for_user_with_board(
 /// # Arguments
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
-/// * `user_id` - A parameter contained in the path, as such: /api/users/my_id, where my_id is the
+/// * `user_id` - A parameter contained in the path, as such: /users/my_id, where my_id is the
 /// unique identifier assigned to a particular user. The ID assigned to each user is a 32-bit
 /// integer
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/users/{user_id}")]
+#[get("/users/{user_id}")]
 pub async fn user_with_id(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     user_id: Path<i32>,
@@ -342,7 +342,7 @@ pub async fn user_with_id(
 /// # Arguments
 ///
 /// * `pool` - The connection pool that will be used to connect to the postgres database
-#[get("/api/users")]
+#[get("/users")]
 pub async fn all_user_ids(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> Result<Json<Vec<i32>>, Error> {

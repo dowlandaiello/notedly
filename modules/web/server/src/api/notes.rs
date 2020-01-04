@@ -24,7 +24,7 @@ use diesel::{
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
 /// * `note_id` - The unique identifier assigned to the note that the user wishes to read
-#[get("/api/notes/{note_id}")]
+#[get("/notes/{note_id}")]
 pub async fn specific_note(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -69,7 +69,7 @@ pub async fn specific_note(
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
 /// * `note_id` - The unique identifier assigned to the note that the user wishes to read
-#[patch("/api/notes/{note_id}")]
+#[patch("/notes/{note_id}")]
 pub async fn update_specific_note(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -108,7 +108,7 @@ pub async fn update_specific_note(
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
 /// * `note_id` - The unique identifier assigned to the note that the user wishes to read
-#[post("/api/notes")]
+#[post("/notes")]
 pub async fn new_note(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,

@@ -111,7 +111,7 @@ pub(crate) fn continue_if_has_perms(
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/boards")]
+#[get("/boards")]
 pub async fn viewable_boards(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -154,7 +154,7 @@ pub async fn viewable_boards(
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// * `board` - The JSON request body sent by the user dictating how to create the new board
-#[post("/api/boards")]
+#[post("/boards")]
 pub async fn new_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -205,7 +205,7 @@ pub async fn new_board(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/boards/{board_id}")]
+#[get("/boards/{board_id}")]
 pub async fn specific_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -253,7 +253,7 @@ pub async fn specific_board(
 /// * `new_board` - A JSON request detailing how to update the board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[patch("/api/boards/{board_id}")]
+#[patch("/boards/{board_id}")]
 pub async fn update_specific_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -298,7 +298,7 @@ pub async fn update_specific_board(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[delete("/api/boards/{board_id}")]
+#[delete("/boards/{board_id}")]
 pub async fn delete_specific_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -336,7 +336,7 @@ pub async fn delete_specific_board(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/boards/{board_id}/permissions")]
+#[get("/boards/{board_id}/permissions")]
 pub async fn all_permissions(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -373,7 +373,7 @@ pub async fn all_permissions(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/boards/{board_id}/notes")]
+#[get("/boards/{board_id}/notes")]
 pub async fn all_notes(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -412,7 +412,7 @@ pub async fn all_notes(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/api/boards/{board_id}/users")]
+#[get("/boards/{board_id}/users")]
 pub async fn all_users(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,

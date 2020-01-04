@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
 /// Generates a pkce challenge, and forwards the user to the respective authentication portal.
-#[get("/api/oauth/login/{provider}")]
+#[get("/oauth/login/{provider}")]
 pub async fn authenticate(
     info: Path<String>,
     data: Data<OauthConfig>,
@@ -75,7 +75,7 @@ pub struct CallbackRequest {
 }
 
 /// Authenticates the user with a given authorization code.
-#[get("/api/oauth/cb")]
+#[get("/oauth/cb")]
 pub async fn callback(
     info: Query<CallbackRequest>,
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
