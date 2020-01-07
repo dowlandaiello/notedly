@@ -36,9 +36,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    boards,
-    notes,
-    permissions,
-    users,
-);
+allow_tables_to_appear_in_same_query!(boards, notes, permissions, users,);
