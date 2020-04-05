@@ -17,3 +17,17 @@ This project simply serves as a demonstration of Rust's full-stack capabilities.
 ## API
 
 To get started with the Notedly API, grab an API token from the [Notedly GitHub authentication endpoint](https://notedly.app/api/oauth/login/github)
+
+## Building from source
+
+In order to build the Notedly source code, you'll need the PostgreSQL development library. For example:
+
+```zsh
+sudo pacman -S postgresql-libs
+```
+
+or, on a debian-based distribution:
+
+```zsh
+sudo apt-get install postgresql-devel
+```
