@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate clap;
 
 #[macro_use]
@@ -10,6 +9,8 @@ use dotenv::dotenv;
 use log::LevelFilter::{Debug, Info};
 use server::api::server::{OauthConfig, Server};
 use std::{env, io};
+use clap::Clap;
+use human_panic::setup_panic;
 
 /// The notedly command-line interface.
 #[derive(Clap)]
@@ -49,6 +50,9 @@ struct Serve {
 /// The entry point for the notedly CLI.
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
+    // Even though everything might be on fire, don't scare the user
+    setup_panic!();
+
     // Load any configuration vars from dotfiles
     dotenv().ok();
 
@@ -109,7 +113,6 @@ async fn serve(serve: Serve) -> io::Result<()> {
         // Make a new server from the generated oauth config
         let mut s = Server::new(oauth_config, rem_values.remove(0), serve.port);
 
-        // Start the server
         s.start().await
     } else {
         Ok(()) // Nothing to do, stop the main fn!
