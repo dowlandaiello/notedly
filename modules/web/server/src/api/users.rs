@@ -5,7 +5,7 @@ use super::super::{
 use actix_web::{
     error,
     web::{Data, HttpRequest, Json, Path},
-    Error as ActixError,
+    Error as ActixError, Scope as ActixScope,
 };
 use diesel::{
     pg::PgConnection,
@@ -31,6 +31,18 @@ impl<E: std::error::Error + 'static> From<E> for Error {
     fn from(e: E) -> Self {
         Self(error::ErrorInternalServerError(e)) // Return the error as an internal server error
     }
+}
+
+/// Constructs an actix service group for the users endpoint.
+pub fn build_service_group() -> ActixScope {
+    ActixScope::new("/users/")
+        .service(all_user_ids)
+        .service(user_with_id)
+        .service(user)
+        .service(boards_from_user_with_id)
+        .service(notes_from_user_with_id)
+        .service(permissions_for_user_with_id)
+        .service(permission_for_user_with_board)
 }
 
 /// Gets the user's oauth bearer token from the given HTTP request. If the token isn't found, an

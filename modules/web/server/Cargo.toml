@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 tokio = "0.2.16"
-reqwest = { git = "https://github.com/dowlandaiello/reqwest", features = ["json"] }
+reqwest = { version = "0.10.4", features = ["json"] }
 snafu = "0.6.3"
 sha3 = "0.8.2"
 serde = { version = "1.0.106", features = ["derive"] }

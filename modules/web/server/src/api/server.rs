@@ -1,7 +1,7 @@
 use super::{boards, notes, oauth, users};
 use actix_cors::Cors;
 use actix_session::CookieSession;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, App, HttpServer, Scope};
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
@@ -141,15 +141,11 @@ impl Server {
                         .wrap(Cors::new().allowed_origin("*").finish()) // TODO: Better CORS policy?
                         .data(pool.clone()) // Allow usage of the db connector from API routes
                         .data(cfg.clone()) // Allow access to the oauth configuration from request handlers
-                        .service(oauth::authenticate) // Register the authentication oauth service
-                        .service(oauth::callback) // Register the oauth callback service
-                        .service(users::all_user_ids) // Register the all users service
-                        .service(users::user_with_id) // Register the GET service for a particular user
-                        .service(users::user) // Register the GET service for a user matching a bearer token
-                        .service(users::boards_from_user_with_id) // Register the GET service for a user's boards (IDs only)
-                        .service(users::notes_from_user_with_id) // The same GET, but for notes
-                        .service(users::permissions_for_user_with_id) // Register the GET service all of a user's assignments
-                        .service(users::permission_for_user_with_board) // Register the GET service for a specific assignmen
+                        .service(
+                            Scope::new("/api/")
+                                .service(oauth::build_service_group()) // Register the oauth service
+                                .service(users::build_service_group()), // Register the users service
+                        )
                         .service(boards::viewable_boards) // Register the GET service for all viewable boards (user has perms to see)
                         .service(boards::specific_board) // Register the GET service for a specific board (only viewable given certain permissions)
                         .service(boards::new_board) // Register the POST service for a new board

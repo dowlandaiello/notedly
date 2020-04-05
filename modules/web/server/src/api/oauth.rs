@@ -23,12 +23,12 @@ use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
 /// Constructs an actix service group for the oauth endpoint.     
-pub fn build_service_group(root_path: &str) -> ActixScope { 
-    ActixScope::new(root_path).service(authenticate).service(callback)
+pub fn build_service_group() -> ActixScope { 
+    ActixScope::new("/oauth/").service(authenticate).service(callback)
 }
 
 /// Generates a pkce challenge, and forwards the user to the respective authentication portal.
-#[get("/oauth/login/{provider}")]
+#[get("/login/{provider}")]
 pub async fn authenticate(
     info: Path<String>,
     data: Data<OauthConfig>,
@@ -81,7 +81,7 @@ pub struct CallbackRequest {
 }
 
 /// Authenticates the user with a given authorization code.
-#[get("/oauth/cb")]
+#[get("/cb")]
 pub async fn callback(
     info: Query<CallbackRequest>,
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
