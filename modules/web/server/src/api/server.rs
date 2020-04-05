@@ -1,7 +1,7 @@
 use super::{boards, notes, oauth, users};
 use actix_cors::Cors;
 use actix_session::CookieSession;
-use actix_web::{middleware::Logger, App, HttpServer, Scope};
+use actix_web::{middleware::Logger, App, HttpServer};
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
