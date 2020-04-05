@@ -12,4 +12,7 @@ docker build -t notedly-server .
 
 # Publish the image under the ID of the last commit, as well as the "latest" tag
 docker tag notedly-server mitsukom/notedly-server:$(git rev-parse HEAD)
+docker tag notedly-server mitsukom/notedly-server:latest
+
 docker push mitsukom/notedly-server:$(git rev-parse HEAD)
+docker push mitsukom/noteldy-server:latest
