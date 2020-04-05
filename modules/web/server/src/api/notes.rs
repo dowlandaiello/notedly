@@ -8,6 +8,7 @@ use super::{
 use actix_web::{
     error,
     web::{Data, HttpRequest, Json, Path},
+    Scope as ActixScope,
 };
 use diesel::{
     dsl::{exists, select, update},
@@ -15,6 +16,14 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
     BelongingToDsl, BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl,
 };
+
+/// Constructs an actix service group for the notes endpoint.
+pub fn build_service_group() -> ActixScope {
+    ActixScope::new("/notes")
+        .service(specific_note)
+        .service(update_specific_note)
+        .service(new_note)
+}
 
 /// Gets a specific note from the database.
 ///
@@ -24,7 +33,7 @@ use diesel::{
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
 /// * `note_id` - The unique identifier assigned to the note that the user wishes to read
-#[get("/notes/{note_id}")]
+#[get("/{note_id}")]
 pub async fn specific_note(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -69,7 +78,7 @@ pub async fn specific_note(
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
 /// * `note_id` - The unique identifier assigned to the note that the user wishes to read
-#[patch("/notes/{note_id}")]
+#[patch("/{note_id}")]
 pub async fn update_specific_note(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -108,7 +117,7 @@ pub async fn update_specific_note(
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
 /// * `note_id` - The unique identifier assigned to the note that the user wishes to read
-#[post("/notes")]
+#[post("")]
 pub async fn new_note(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,

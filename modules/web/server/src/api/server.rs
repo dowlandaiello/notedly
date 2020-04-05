@@ -141,22 +141,10 @@ impl Server {
                         .wrap(Cors::new().allowed_origin("*").finish()) // TODO: Better CORS policy?
                         .data(pool.clone()) // Allow usage of the db connector from API routes
                         .data(cfg.clone()) // Allow access to the oauth configuration from request handlers
-                        .service(
-                            Scope::new("/api/")
-                                .service(oauth::build_service_group()) // Register the oauth service
-                                .service(users::build_service_group()), // Register the users service
-                        )
-                        .service(boards::viewable_boards) // Register the GET service for all viewable boards (user has perms to see)
-                        .service(boards::specific_board) // Register the GET service for a specific board (only viewable given certain permissions)
-                        .service(boards::new_board) // Register the POST service for a new board
-                        .service(boards::update_specific_board) // Register the PATCH service for a specific board
-                        .service(boards::delete_specific_board) // Reigster the DELETE service for a specific board
-                        .service(boards::all_permissions) // Register the GET service for a specific board's permissions
-                        .service(boards::all_notes) // Register the GET service for all of the notes belonging to a specific board
-                        .service(boards::all_users) // Register the GET service for all of the users belonging to a specific board
-                        .service(notes::specific_note) // Register the GET service for an individual note with a particular ID
-                        .service(notes::update_specific_note) // Register the PATCH service for an individual note with a particular ID
-                        .service(notes::new_note) // Register the POST service for a new note
+                        .service(oauth::build_service_group()) // Register the oauth service
+                        .service(users::build_service_group()) // Register the users service
+                        .service(boards::build_service_group()) // Register the boards service
+                        .service(notes::build_service_group()) // Register the notes service
                 })
                 .bind(format!("0.0.0.0:{}", self.port))?
                 .run()

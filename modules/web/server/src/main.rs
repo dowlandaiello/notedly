@@ -5,12 +5,12 @@ extern crate log;
 
 extern crate dotenv;
 
+use clap::Clap;
 use dotenv::dotenv;
+use human_panic::setup_panic;
 use log::LevelFilter::{Debug, Info};
 use server::api::server::{OauthConfig, Server};
 use std::{env, io};
-use clap::Clap;
-use human_panic::setup_panic;
 
 /// The notedly command-line interface.
 #[derive(Clap)]

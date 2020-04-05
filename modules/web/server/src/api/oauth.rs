@@ -7,8 +7,7 @@ use actix_session::Session;
 use actix_web::{
     error, http,
     web::{Data, Json, Path, Query},
-    Error, HttpResponse,
-    Scope as ActixScope
+    Error, HttpResponse, Scope as ActixScope,
 };
 use diesel::{
     pg::PgConnection,
@@ -23,8 +22,10 @@ use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
 /// Constructs an actix service group for the oauth endpoint.     
-pub fn build_service_group() -> ActixScope { 
-    ActixScope::new("/oauth/").service(authenticate).service(callback)
+pub fn build_service_group() -> ActixScope {
+    ActixScope::new("/oauth")
+        .service(authenticate)
+        .service(callback)
 }
 
 /// Generates a pkce challenge, and forwards the user to the respective authentication portal.

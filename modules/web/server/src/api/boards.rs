@@ -8,6 +8,7 @@ use super::{
 use actix_web::{
     error,
     web::{Data, HttpRequest, HttpResponse, Json, Path},
+    Scope as ActixScope,
 };
 use diesel::{
     dsl::{delete, exists, select, update},
@@ -104,6 +105,19 @@ pub(crate) fn continue_if_has_perms(
     Ok(())
 }
 
+/// Constructs an actix service group for the boards endpoint.
+pub fn build_service_group() -> ActixScope {
+    ActixScope::new("/boards")
+        .service(viewable_boards)
+        .service(specific_board)
+        .service(new_board)
+        .service(update_specific_board)
+        .service(delete_specific_board)
+        .service(all_permissions)
+        .service(all_notes)
+        .service(all_users)
+}
+
 /// Gets a list of board IDs that the currently authenticated user is able to view.
 ///
 /// # Arguments
@@ -111,7 +125,7 @@ pub(crate) fn continue_if_has_perms(
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/boards")]
+#[get("")]
 pub async fn viewable_boards(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -154,7 +168,7 @@ pub async fn viewable_boards(
 /// * `pool` - The connection pool that will be used to connect to the postgres database
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// * `board` - The JSON request body sent by the user dictating how to create the new board
-#[post("/boards")]
+#[post("")]
 pub async fn new_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     req: HttpRequest,
@@ -205,7 +219,7 @@ pub async fn new_board(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/boards/{board_id}")]
+#[get("/{board_id}")]
 pub async fn specific_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -253,7 +267,7 @@ pub async fn specific_board(
 /// * `new_board` - A JSON request detailing how to update the board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[patch("/boards/{board_id}")]
+#[patch("/{board_id}")]
 pub async fn update_specific_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -298,7 +312,7 @@ pub async fn update_specific_board(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[delete("/boards/{board_id}")]
+#[delete("/{board_id}")]
 pub async fn delete_specific_board(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -336,7 +350,7 @@ pub async fn delete_specific_board(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/boards/{board_id}/permissions")]
+#[get("/{board_id}/permissions")]
 pub async fn all_permissions(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -373,7 +387,7 @@ pub async fn all_permissions(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/boards/{board_id}/notes")]
+#[get("/{board_id}/notes")]
 pub async fn all_notes(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
@@ -412,7 +426,7 @@ pub async fn all_notes(
 /// * `board_uid` - The ID of the requested board
 /// * `req` - An HTTP request provided by the caller of this method. Used to obtain the bearer
 /// token (required) of the user
-#[get("/boards/{board_id}/users")]
+#[get("/{board_id}/users")]
 pub async fn all_users(
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
     board_uid: Path<i32>,
