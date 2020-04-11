@@ -1,0 +1,41 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "api-server"
+  namespace: "default"
+  labels:
+    app: "api-server"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: "api-server"
+  template:
+    metadata:
+      labels:
+        app: "api-server"
+    spec:
+      containers:
+      - name: "notedly-server-sha256-1"
+        image: "us.gcr.io/notedly/notedly-server@sha256:76fdb4e6290e2e57ac4c1c039efd7bb3a9f26f4c7f0c74e3717a22e71f9979c8"
+---
+apiVersion: "autoscaling/v2beta1"
+kind: "HorizontalPodAutoscaler"
+metadata:
+  name: "api-server-hpa-3r7r"
+  namespace: "default"
+  labels:
+    app: "api-server"
+spec:
+  scaleTargetRef:
+    kind: "Deployment"
+    name: "api-server"
+    apiVersion: "apps/v1"
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: "Resource"
+    resource:
+      name: "cpu"
+      targetAverageUtilization: 80
