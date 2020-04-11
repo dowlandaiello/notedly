@@ -3,6 +3,7 @@
 # The user must be logged in to docker in order to
 # deploy to a registry
 grep -q "docker login" <<< $(docker pull mitsukom/test:latest > /dev/null 2>&1) || docker login || exit 1
+
 # We must be in a directory with a dockerfile, or have
 # moved to a directory where we should find one
 [ -f Dockerfile ] || cd ..
