@@ -318,6 +318,7 @@ pub async fn delete_specific_board(
     board_uid: Path<i32>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
+    println!("test");
     // Get a connection from the provided connection pool, so we can start using diesel
     let conn = pool.get()?;
 
@@ -326,7 +327,7 @@ pub async fn delete_specific_board(
 
     // Get the user that was mentioned in the request
     let matching_user: User = users
-        .filter(schema::users::oauth_token.eq(token))
+        .filter(schema::users::oauth_token.eq(hash_token(token)))
         .first(&conn)?;
 
     // Ensure that the user is the owner of the board
