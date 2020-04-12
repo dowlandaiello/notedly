@@ -94,7 +94,7 @@ impl Server {
     /// * `database_endpoint` - The active database connection URI
     /// * `port` - The port that the API will be served on
     pub fn new(mut oauth_config: OauthConfig, database_endpoint: String, port: u16) -> Self {
-        let callback_url = format!("http://localhost:{}/api/oauth/cb", port); // Get the oauth callback url
+        let callback_url = format!("https://api.notedly.app:{}/oauth/cb", port); // Get the oauth callback url
 
         // Set the redirect URL for both clients
         oauth_config.google_api_client = oauth_config
