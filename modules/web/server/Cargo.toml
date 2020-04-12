@@ -10,7 +10,7 @@ reqwest = { version = "0.10.4", features = ["json"] }
 snafu = "0.6.3"
 sha3 = "0.8.2"
 serde = { version = "1.0.106", features = ["derive"] }
-clap = { git = "https://github.com/clap-rs/clap/" }
+clap = { package = "clap-v3", version = "3.0.0-beta.1" }
 hex = "0.4.2"
 log = "0.4.8"
 env_logger = "0.7.1"
@@ -26,3 +26,7 @@ actix-session = "0.3.0"
 actix-rt = "1.0.0"
 actix-cors = "0.2.0"
 human-panic = "1.0.3"
+
+[[bin]]
+name = "notedlyd"
+path = "src/main.rs"

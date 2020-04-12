@@ -15,4 +15,4 @@ RUN cargo install --path .
 
 EXPOSE 80
 
-CMD ["server", "serve", "-p", "80"]
+CMD ["notedlyd", "serve", "-p", "80"]
