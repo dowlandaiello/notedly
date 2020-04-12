@@ -1,7 +1,7 @@
 use super::{
     super::{
         models::{Board, NewBoard, NewPermission, Note, Permission, UpdateBoard, User},
-        schema::{self, boards::dsl::*, permissions::dsl::*, users::dsl::*},
+        schema::{self, boards::dsl::*, permissions::dsl::*, users::dsl::*, notes::dsl::*},
     },
     users::{extract_bearer, hash_token, Error},
 };
@@ -318,7 +318,6 @@ pub async fn delete_specific_board(
     board_uid: Path<i32>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
-    println!("test");
     // Get a connection from the provided connection pool, so we can start using diesel
     let conn = pool.get()?;
 
@@ -337,7 +336,10 @@ pub async fn delete_specific_board(
     delete(boards.find(*board_uid)).execute(&conn)?;
 
     // Delete the associated permissions
-    delete(permissions.find(*board_uid)).execute(&conn)?;
+    delete(permissions.filter(schema::permissions::board_id.eq(*board_uid))).execute(&conn)?;
+
+    // Delete the associated notes
+    delete(notes.filter(schema::notes::board_id.eq(*board_uid))).execute(&conn)?;
 
     // Update the board in the table
     Ok(HttpResponse::Ok().finish())

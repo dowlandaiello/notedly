@@ -44,7 +44,7 @@ CREATE TABLE notes (
 );
 
 CREATE TABLE permissions (
-    -- THe ID of the permission
+    -- The ID of the permission
     id SERIAL PRIMARY KEY,
 
     -- The ID of the associated user targeted by the permission
