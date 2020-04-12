@@ -1,0 +1,4 @@
+.env
+.git/
+.env.yaml
+.rustfmt.toml

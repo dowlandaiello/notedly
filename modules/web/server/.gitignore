@@ -11,3 +11,7 @@ Cargo.lock
 
 # Notes generated via testing
 *.note
+
+# Environment var files
+.env
+.env.yaml
