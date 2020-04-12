@@ -37,8 +37,8 @@ impl<E: std::error::Error + 'static> From<E> for Error {
 pub fn build_service_group() -> ActixScope {
     ActixScope::new("/users")
         .service(all_user_ids)
-        .service(user_with_id)
         .service(user)
+        .service(user_with_id)
         .service(boards_from_user_with_id)
         .service(notes_from_user_with_id)
         .service(permissions_for_user_with_id)

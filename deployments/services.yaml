@@ -1,0 +1,23 @@
+apiVersion: "networking.k8s.io/v1"
+kind: "NetworkPolicy"
+metadata:
+  name: allow-all-egress
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - {}
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "api-request-balancer"
+spec:
+  selector:
+    app: "api-server"
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+
