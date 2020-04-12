@@ -18,16 +18,15 @@ docker tag notedly-server "mitsukom/notedly-server:$VERSION"
 docker tag notedly-server mitsukom/notedly-server:latest
 
 # Publish to gcloud
-if command -v gcloud; then
+if command -v gcloud >/dev/null 2>&1; then
     echo "Looks like you have gcloud installed! Publishing to gcloud now..."
 
-    docker tag notedly-server "us.grc.io/notedly-627656760499/notedly-server:$VERSION"
-    docker tag notedly-server us.grc.io/notedly-627656760499/notedly-server:latest
+    docker tag notedly-server "us.gcr.io/notedly/notedly-server:$VERSION"
+    docker tag notedly-server us.gcr.io/notedly/notedly-server:latest
 
-    gcloud docker -- push "us.grc.io/notedly-627656760499/notedly-server:$VERSION"
-    gcloud docker -- push us.grc.io/notedly-627656760499/notedly-server:latest
+    docker push "us.gcr.io/notedly/notedly-server:$VERSION"
+    docker push us.gcr.io/notedly/notedly-server:latest
 fi
 
-
 docker push "mitsukom/notedly-server:$VERSION"
-docker push mitsukom/noteldy-server:latest
+docker push mitsukom/notedly-server:latest

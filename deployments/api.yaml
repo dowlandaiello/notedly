@@ -19,6 +19,8 @@ spec:
       containers:
       - name: "notedly-server-sha256-1"
         image: "us.gcr.io/notedly/notedly-server@sha256:76fdb4e6290e2e57ac4c1c039efd7bb3a9f26f4c7f0c74e3717a22e71f9979c8"
+        ports:
+          - containerPort: 80
 ---
 apiVersion: "autoscaling/v2beta1"
 kind: "HorizontalPodAutoscaler"
