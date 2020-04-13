@@ -7,14 +7,10 @@
     >
       <div class="navbar-brand">
         <a
-          class="navbar-item"
+          class="navbar-item logomark"
           href="/"
         >
-          <img
-            src="~assets/buefy.png"
-            alt="Buefy"
-            height="28"
-          >
+          Notedly
         </a>
 
         <div class="navbar-burger">
@@ -28,7 +24,7 @@
     <section class="main-content columns">
       <aside class="column is-2 section">
         <p class="menu-label is-hidden-touch">
-          General
+          My notedly
         </p>
         <ul class="menu-list">
           <li
@@ -58,13 +54,18 @@ export default {
     return {
       items: [
         {
-          title: 'Recent',
+          title: 'My boards',
           icon: 'home',
           to: { name: 'index' }
         },
         {
-          title: 'Inspire',
-          icon: 'lightbulb',
+          title: 'Recent',
+          icon: 'clock',
+          to: { name: 'recent' }
+        },
+        {
+          title: 'Shared',
+          icon: 'account-multiple',
           to: { name: 'inspire' }
         }
       ]
@@ -72,3 +73,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.logomark {
+  font-size: 1.25rem;
+}
+</style>

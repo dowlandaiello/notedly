@@ -1,53 +1,48 @@
 <template>
   <section class="section">
     <div class="columns is-mobile">
-      <card
-        title="Free"
-        icon="github-circle"
-      >
-        Open source on <a href="https://github.com/buefy/buefy">
-          GitHub
-        </a>
-      </card>
-
-      <card
-        title="Responsive"
-        icon="cellphone-link"
-      >
-        <b class="has-text-grey">
-          Every
-        </b> component is responsive
-      </card>
-
-      <card
-        title="Modern"
-        icon="alert-decagram"
-      >
-        Built with <a href="https://vuejs.org/">
-          Vue.js
-        </a> and <a href="http://bulma.io/">
-          Bulma
-        </a>
-      </card>
-
-      <card
-        title="Lightweight"
-        icon="arrange-bring-to-front"
-      >
-        No other internal dependency
-      </card>
+      <div class="column card is-2">
+        <div class="container has-text-centered">
+          <b-icon icon="plus" class="card-icon" size="is-medium" />
+          <br>
+          Make something new!
+        </div>
+      </div>
+      <div class="column card is-2">
+        <div class="container has-text-centered">
+          <b-icon icon="folder" class="card-icon" size="is-medium" />
+          <br>
+          Ungrouped Notes
+        </div>
+      </div>
+      <div class="column card is-2">
+        <div class="container has-text-centered">
+          <b-icon icon="folder" class="card-icon" size="is-medium" />
+          <br>
+          Ungrouped Notes
+        </div>
+      </div>
     </div>
   </section>
 </template>
 
 <script>
-import Card from '~/components/Card'
-
 export default {
   name: 'HomePage',
-
-  components: {
-    Card
-  }
 }
 </script>
+
+<style scoped>
+.card {
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.card {
+  height: 16rem;
+  
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+}
+</style>
